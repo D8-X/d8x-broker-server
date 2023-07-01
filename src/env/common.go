@@ -1,0 +1,11 @@
+package env
+
+// Environment variable names
+const (
+	// Port on which REST API will be exposed, defaults to "8000"
+	API_PORT = "API_PORT"
+	// Address on which REST API will bind. Defaults to "",
+	API_BIND_ADDR = "API_BIND_ADDR"
+	// Broker key
+	BROKER_KEY = "BROKER_KEY"
+)
