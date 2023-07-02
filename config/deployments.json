@@ -1,0 +1,12 @@
+[
+  {
+    "chainId": 80001,
+    "name": "Mumbai",
+    "perpetualManagerProxyAddr": "0xb239ADc4D255Ea13F66510a58eF7aB6171A9f5db"
+  },
+  {
+    "chainId": 1442,
+    "name": "zkEVM Testnet",
+    "perpetualManagerProxyAddr": "0x1a23C2d6DB5B0C340bADa2fAB1f603aA3c37779C"
+  }
+]

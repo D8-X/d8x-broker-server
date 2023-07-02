@@ -28,6 +28,9 @@ func GetBrokerFee(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Broker Fee for Perpetual ID %s", perpetualID)
 }
 
+// SignOrder signs an order with the broker key and sets the fee
+// Additional to the order, the broker needs to know the
+// chainId
 func SignOrder(w http.ResponseWriter, r *http.Request) {
 	// Parse the JSON payload
 	var order Order

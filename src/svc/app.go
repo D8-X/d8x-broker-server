@@ -4,7 +4,9 @@ import (
 	"log"
 
 	"github.com/D8-X/d8x-broker-server/src/api"
+	"github.com/D8-X/d8x-broker-server/src/config"
 	"github.com/D8-X/d8x-broker-server/src/env"
+	"github.com/D8-X/d8x-broker-server/src/utils"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -21,12 +23,22 @@ func Run() {
 		log.Fatalf("creating logger: %v", err)
 	}
 	loadEnv(l);
+	config, err := config.LoadDeploymentConfig("../config/deployments.json")
+	if err != nil {
+		log.Fatalf("loading deploymentconfig: %v", err)
+	}
+	pk := viper.GetString(env.BROKER_KEY);
+	pen, err := utils.NewSignaturePen(pk, config)
+	if err!=nil {
+		log.Fatalf("unable to create signature pen: %v", err)
+	}
 	l.Info("starting REST API server");
 	// Start the rest api
 	app := &api.App{
 		Logger:   l,
 		Port:     viper.GetString(env.API_PORT),
 		BindAddr: viper.GetString(env.API_BIND_ADDR),
+		Pen: pen,
 	}
 	app.StartApiServer()
 	
@@ -35,7 +47,7 @@ func Run() {
 
 func loadEnv(l *zap.Logger) {
 
-	viper.SetConfigFile(".env")
+	viper.SetConfigFile("../.env")
 	if err := viper.ReadInConfig(); err != nil {
 		l.Warn("could not load .env file", zap.Error(err))
 	}
