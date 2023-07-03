@@ -8,4 +8,6 @@ const (
 	API_BIND_ADDR = "API_BIND_ADDR"
 	// Broker key
 	BROKER_KEY = "BROKER_KEY"
+	// Broker fee in tenth of bps
+	BROKER_FEE_TBPS = "BROKER_FEE_TBPS"
 )

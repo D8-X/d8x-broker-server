@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 
 	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
@@ -25,10 +26,32 @@ func NewSignaturePen(privateKeyHex string, config []DeploymentConfig) (Signature
 	return pen, nil
 }
 
+func (p* SignaturePen) GetBrokerSignatureResponse(order d8x_futures.IPerpetualOrderOrder, brokerFeeTbps uint32, chainId int64) ([]byte, error) {
+	_, sig, err := p.SignOrder(order, brokerFeeTbps, chainId)
+	if err!=nil {
+		return nil, err
+	}
+	res := APIBrokerSignatureRes {
+		BrokerFeeTbps: uint16(brokerFeeTbps),
+		BrokerAddr: p.Wallets[chainId].Address.String(),
+		Deadline: order.IDeadline,
+		BrokerSignature: sig,
+	}
+	// Marshal the struct into JSON
+	jsonResponse, err := json.Marshal(res)
+	if err != nil {
+		return nil, err
+	}
+	return jsonResponse, nil
+}
+
 func (p *SignaturePen) SignOrder(order d8x_futures.IPerpetualOrderOrder, brokerFeeTbps uint32, chainId int64) (string, string, error) {
 	//
 	proxyAddr := p.Config[chainId].PerpetualManagerProxyAddr
 	wallet := p.Wallets[chainId]
+	if wallet.PrivateKey==nil {
+		return "", "", fmt.Errorf("No broker key defined for chain %d", chainId)
+	}
 	digest, sig, err := d8x_futures.CreateBrokerSignature(
 		proxyAddr, chainId, wallet, int32(order.IPerpetualId.Int64()), brokerFeeTbps, 
 		order.TraderAddr.String(), order.IDeadline);

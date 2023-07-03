@@ -11,11 +11,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// Struct to represent the JSON argument for the /sign-order endpoint
-type Order struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
 
 func Run() {
 	l, err := GetDefaultLogger()
@@ -32,6 +27,7 @@ func Run() {
 	if err!=nil {
 		log.Fatalf("unable to create signature pen: %v", err)
 	}
+	fee := uint16(viper.GetInt32(env.BROKER_FEE_TBPS))
 	l.Info("starting REST API server");
 	// Start the rest api
 	app := &api.App{
@@ -39,6 +35,7 @@ func Run() {
 		Port:     viper.GetString(env.API_PORT),
 		BindAddr: viper.GetString(env.API_BIND_ADDR),
 		Pen: pen,
+		BrokerFeeTbps: fee,
 	}
 	app.StartApiServer()
 	
@@ -57,6 +54,7 @@ func loadEnv(l *zap.Logger) {
 
 	requiredEnvs := []string{
 		env.BROKER_KEY,
+		env.BROKER_FEE_TBPS,
 	}
 
 	for _, e := range requiredEnvs {

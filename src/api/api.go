@@ -15,12 +15,13 @@ type App struct {
 	Port     string
 	BindAddr string
 	Pen utils.SignaturePen 
+	BrokerFeeTbps uint16
 }
 
 // StartApiServer initializes and starts the api server. This func is blocking
 func (a *App) StartApiServer() {
 	if len(a.Port) == 0 {
-		a.Logger.Fatal("could not start start the API server, Port must be provided")
+		a.Logger.Fatal("could not start the API server, Port must be provided")
 	}
 
 	router := chi.NewRouter()
