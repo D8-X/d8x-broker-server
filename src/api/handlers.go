@@ -17,7 +17,7 @@ func setVariables(_pen utils.SignaturePen) {
 
 func GetBrokerAddress(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen) {
 	var brokerAddr string
-	for _,v := range pen.Wallets {
+	for _, v := range pen.Wallets {
 		brokerAddr = v.Address.String()
 		break
 	}
@@ -65,7 +65,7 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 		defer r.Body.Close()
 		jsonData, _ = ioutil.ReadAll(r.Body)
 	}
-	
+
 	// Parse the JSON payload
 	var req utils.APIBrokerSignatureReq
 	err := json.Unmarshal([]byte(jsonData), &req)
@@ -74,15 +74,16 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 		return
 	}
 	err = req.CheckData()
-	if err!=nil {
+	if err != nil {
 		http.Error(w, string(formatError(err.Error())), http.StatusBadRequest)
 		return
 	}
-	jsonResponse, error := pen.GetBrokerSignatureResponse(req.Order, uint32(feeTbps), int64(req.ChainId))
-	if error!=nil {
+	req.Order.BrokerFeeTbps = feeTbps
+	jsonResponse, error := pen.GetBrokerSignatureResponse(req.Order, int64(req.ChainId))
+	if error != nil {
 		response := string(formatError(error.Error()))
 		fmt.Fprintf(w, response)
-		return;
+		return
 	}
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
