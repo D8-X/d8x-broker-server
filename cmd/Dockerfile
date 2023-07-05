@@ -1,7 +1,7 @@
 # ====== Build ======
 FROM golang:1.20 AS stage-build
 # see https://hub.docker.com/_/golang
-# and https://codilime.com/blog/dealing-with-private-repositories-go-modules-docker-circleci/
+# and https://levelup.gitconnected.com/golang-dockerfile-for-project-with-private-dependencies-using-https-without-ssh-9a9f0bbeddd8
 
 
 # git private repo stuff
