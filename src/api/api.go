@@ -11,10 +11,10 @@ import (
 
 // App is dependency container for API server
 type App struct {
-	Logger   *zap.Logger
-	Port     string
-	BindAddr string
-	Pen utils.SignaturePen 
+	Logger        *zap.Logger
+	Port          string
+	BindAddr      string
+	Pen           utils.SignaturePen
 	BrokerFeeTbps uint16
 }
 
