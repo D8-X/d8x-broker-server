@@ -1,0 +1,16 @@
+[
+  {
+    "chainId": 80001,
+    "name": "Mumbai",
+    "perpetualManagerProxyAddr": "0xb239ADc4D255Ea13F66510a58eF7aB6171A9f5db",
+    "multiPayCtrctAddr": "0x30b55550e02B663E15A95B50850ebD20363c2AD5",
+    "allowedExecutors": ["0x9d5aaB428e98678d0E645ea4AeBd25f744341a05"]
+  },
+  {
+    "chainId": 1442,
+    "name": "zkEVM Testnet",
+    "perpetualManagerProxyAddr": "0x1a23C2d6DB5B0C340bADa2fAB1f603aA3c37779C",
+    "multiPayCtrctAddr": "0x30b55550e02B663E15A95B50850ebD20363c2AD5",
+    "allowedExecutors": ["0x9d5aaB428e98678d0E645ea4AeBd25f744341a05"]
+  }
+]

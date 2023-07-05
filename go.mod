@@ -3,7 +3,7 @@ module github.com/D8-X/d8x-broker-server
 go 1.20
 
 require (
-	github.com/D8-X/d8x-futures-go-sdk v0.0.8 // direct
+	github.com/D8-X/d8x-futures-go-sdk v0.0.9 // direct
 	github.com/spf13/viper v1.16.0 // direct
 )
 
@@ -38,7 +38,7 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.10.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.10.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/D8-X/d8x-broker-server/src/utils"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var pen utils.SignaturePen
@@ -67,7 +68,7 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 	}
 
 	// Parse the JSON payload
-	var req utils.APIBrokerSignatureReq
+	var req utils.APIBrokerOrderSignatureReq
 	err := json.Unmarshal([]byte(jsonData), &req)
 	if err != nil {
 		http.Error(w, string(formatError(err.Error())), http.StatusBadRequest)
@@ -79,9 +80,9 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 		return
 	}
 	req.Order.BrokerFeeTbps = feeTbps
-	jsonResponse, error := pen.GetBrokerSignatureResponse(req.Order, int64(req.ChainId))
-	if error != nil {
-		response := string(formatError(error.Error()))
+	jsonResponse, err := pen.GetBrokerOrderSignatureResponse(req.Order, int64(req.ChainId))
+	if err != nil {
+		response := string(formatError(err.Error()))
 		fmt.Fprintf(w, response)
 		return
 	}
@@ -89,6 +90,63 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 	w.Header().Set("Content-Type", "application/json")
 	// Write the JSON response
 	w.Write(jsonResponse)
+}
+
+func SignPayment(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen) {
+	// Read the JSON data from the request body
+	var jsonData []byte
+	if r.Body != nil {
+		defer r.Body.Close()
+		jsonData, _ = ioutil.ReadAll(r.Body)
+	}
+
+	// Parse the JSON payload
+	var req utils.APIBrokerPaySignatureReq
+	err := json.Unmarshal([]byte(jsonData), &req)
+	if err != nil {
+
+		http.Error(w, string(formatError(err.Error())), http.StatusBadRequest)
+		return
+	}
+	addr, err := pen.RecoverPaymentSignerAddr(req)
+	if err != nil {
+		response := string(formatError(err.Error()))
+		fmt.Fprintf(w, response)
+		return
+	}
+	if addr != req.Payment.Executor {
+		response := string(formatError("wrong signature"))
+		fmt.Fprintf(w, response)
+		return
+	}
+	// signature correct, check if this is a registered payer
+	if !findExecutor(pen, req.ChainId, addr) {
+		response := string(formatError("executor not allowed"))
+		fmt.Fprintf(w, response)
+		return
+	}
+	// allowed executor, we can sign
+	jsonResponse, err := pen.GetBrokerPaymentSignatureResponse(req)
+	if err != nil {
+		response := string(formatError(err.Error()))
+		fmt.Fprintf(w, response)
+		return
+	}
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+	// Write the JSON response
+	w.Write(jsonResponse)
+
+}
+
+func findExecutor(pen utils.SignaturePen, chainId int64, executor common.Address) bool {
+	config := pen.Config[chainId]
+	for _, addr := range config.AllowedExecutors {
+		if addr == executor {
+			return true
+		}
+	}
+	return false
 }
 
 func formatError(errorMsg string) []byte {

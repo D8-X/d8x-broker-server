@@ -9,19 +9,19 @@ import (
 )
 
 // load configuration json with deployment addresses: "config/deployments.json"
-func LoadDeploymentConfig(configName string) ([]utils.DeploymentConfig, error) {
+func LoadChainConfig(configName string) ([]utils.ChainConfig, error) {
 	// Read the JSON file
 	data, err := ioutil.ReadFile(configName)
 	if err != nil {
 		log.Fatal("Error reading JSON file:", err)
-		return []utils.DeploymentConfig{}, err
+		return []utils.ChainConfig{}, err
 	}
-	var configuration []utils.DeploymentConfig
+	var configuration []utils.ChainConfig
 	// Unmarshal the JSON data into the Configuration struct
 	err = json.Unmarshal(data, &configuration)
 	if err != nil {
 		log.Fatal("Error decoding JSON:", err)
-		return []utils.DeploymentConfig{}, err
+		return []utils.ChainConfig{}, err
 	}
 	return configuration, nil
 }

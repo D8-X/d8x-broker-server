@@ -3,21 +3,25 @@ package utils
 import (
 	"fmt"
 
+	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type DeploymentConfig struct {
-	ChainId                   int64          `json:"chainId"`
-	Name                      string         `json:"name"`
-	PerpetualManagerProxyAddr common.Address `json:"perpetualManagerProxyAddr"`
+type ChainConfig struct {
+	ChainId                   int64            `json:"chainId"`
+	Name                      string           `json:"name"`
+	PerpetualManagerProxyAddr common.Address   `json:"perpetualManagerProxyAddr"`
+	MultiPayCtrctAddr         common.Address   `json:"multiPayCtrctAddr"`
+	AllowedExecutors          []common.Address `json:"allowedExecutors"`
 }
 
-type APIBrokerSignatureReq struct {
-	Order   APIOrderSig `json:"order"`
-	ChainId int64       `json:"chainId"`
+type APIBrokerOrderSignatureReq struct {
+	Order     APIOrderSig `json:"order"`
+	ChainId   int64       `json:"chainId"`
+	Signature string      `json:"signature"`
 }
 
-func (req *APIBrokerSignatureReq) CheckData() error {
+func (req *APIBrokerOrderSignatureReq) CheckData() error {
 	if req.ChainId == 0 {
 		return fmt.Errorf("chainId not provided")
 	}
@@ -33,6 +37,12 @@ func (req *APIBrokerSignatureReq) CheckData() error {
 	}
 
 	return nil
+}
+
+type APIBrokerPaySignatureReq struct {
+	Payment           d8x_futures.PaySummary `json:"payment"`
+	ChainId           int64                  `json:"chainId"`
+	ExecutorSignature string                 `json:"signature"`
 }
 
 // Required data to sign: iPerpetualId: number, brokerFeeTbps: number, traderAddr: string, iDeadline: number,

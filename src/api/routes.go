@@ -10,17 +10,21 @@ import (
 func (a *App) RegisterRoutes(router chi.Router) {
 	// Endpoint: /broker-address?id={id}
 	router.Get("/broker-address", func(w http.ResponseWriter, r *http.Request) {
-        GetBrokerAddress(w, r, a.Pen) // Pass fee here
-    })
+		GetBrokerAddress(w, r, a.Pen) // Pass fee here
+	})
 
 	// Endpoint: /broker-fee?perpetualId={perpetualId}
 	router.Get("/broker-fee", func(w http.ResponseWriter, r *http.Request) {
-        GetBrokerFee(w, r, a.BrokerFeeTbps) // Pass fee here
-    })
+		GetBrokerFee(w, r, a.BrokerFeeTbps) // Pass fee here
+	})
 
 	// Endpoint: /sign-order
 	router.Post("/sign-order", func(w http.ResponseWriter, r *http.Request) {
-        SignOrder(w, r, a.Pen, a.BrokerFeeTbps) // Pass `a.Pen` and fee here
-    })
+		SignOrder(w, r, a.Pen, a.BrokerFeeTbps) // Pass `a.Pen` and fee here
+	})
+
+	// Endpoint: /payment-signature
+	router.Post("/sign-payment", func(w http.ResponseWriter, r *http.Request) {
+		SignPayment(w, r, a.Pen) // Pass `a.Pen` and fee here
+	})
 }
-	
