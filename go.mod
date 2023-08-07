@@ -3,7 +3,7 @@ module github.com/D8-X/d8x-broker-server
 go 1.20
 
 require (
-	github.com/D8-X/d8x-futures-go-sdk v0.0.9 // direct
+	github.com/D8-X/d8x-futures-go-sdk v0.0.11 // direct
 	github.com/spf13/viper v1.16.0 // direct
 )
 
