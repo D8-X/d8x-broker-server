@@ -4,7 +4,7 @@ server to be used as remote broker by trader back-end
 
 ## Run
 Copy configuration and edit allowedExecutors (addresses which are permissioned to execute payments):
-`cp config/shared.chainConfig.json config/live.chainConfig.json` and
+`cp config/example.chainConfig.json config/live.chainConfig.json` and
 `nano config/live.chainConfig.json` to edit.
 Build with `go build cmd/main.go`
 
