@@ -110,8 +110,22 @@ func SignPayment(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen)
 	var req utils.APIBrokerPaySignatureReq
 	err := json.Unmarshal([]byte(jsonData), &req)
 	if err != nil {
-
-		http.Error(w, string(formatError(err.Error())), http.StatusBadRequest)
+		errMsg := `Wrong argument types. Usage: {
+			'payment': {
+				'payer': '0x4Fdc785fe2C6812960C93CA2F9D12b5Bd21ea2a1', 
+				'executor': '0xDa47a0CAc77D50114F2725D06a2Ce887cF9f4D98', 
+				'token': '0x2d10075E54356E16Ebd5C6BB5194290709B69C1e', 
+				'timestamp': 1691249493, 
+				'id': 1,
+				'totalAmount': 1000000000000000000,
+				'chainId': 80001,
+				'multiPayCtrct': '0x30b55550e02B663E15A95B50850ebD20363c2AD5'
+			},
+			'signature': '0xABCE...'
+		}`
+		errMsg = strings.ReplaceAll(errMsg, "\t", "")
+		errMsg = strings.ReplaceAll(errMsg, "\n", "")
+		http.Error(w, string(formatError(errMsg)), http.StatusBadRequest)
 		return
 	}
 	addr, err := pen.RecoverPaymentSignerAddr(req)

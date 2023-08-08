@@ -27,7 +27,7 @@ func TestSignOrder(t *testing.T) {
 	// Derive the Ethereum address from the private key
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	config, err := config.LoadChainConfig("../../config/chainConfig.json")
+	config, err := config.LoadChainConfig("../../config/shared.chainConfig.json")
 	if err != nil {
 		t.Errorf("loading deploymentconfig: %v", err)
 		return
@@ -102,6 +102,10 @@ func TestSignPayment(t *testing.T) {
 		ChainId:       80001,
 		MultiPayCtrct: multiPayCtrctAddr,
 	}
+	brokerAddrStr := brokerAddr.String()
+	execAddrStr := execAddr.String()
+	t.Log("brokerAddr = ", brokerAddrStr)
+	t.Log("execAddr = ", execAddrStr)
 	var execWallet d8x_futures.Wallet
 	pk := fmt.Sprintf("%x", execPk.D)
 	err = execWallet.NewWallet(pk, 80001, nil)
@@ -115,7 +119,7 @@ func TestSignPayment(t *testing.T) {
 		ExecutorSignature: sg,
 	}
 
-	config, err := config.LoadChainConfig("../../config/chainConfig.json")
+	config, err := config.LoadChainConfig("../../config/shared.chainConfig.json")
 	if err != nil {
 		t.Errorf("loading deploymentconfig: %v", err)
 		return

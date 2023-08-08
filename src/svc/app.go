@@ -17,7 +17,7 @@ func Run() {
 		log.Fatalf("creating logger: %v", err)
 	}
 	loadEnv(l)
-	config, err := config.LoadChainConfig("../config/chainConfig.json")
+	config, err := config.LoadChainConfig("../config/live.chainConfig.json")
 	if err != nil {
 		log.Fatalf("loading deploymentconfig: %v", err)
 	}
