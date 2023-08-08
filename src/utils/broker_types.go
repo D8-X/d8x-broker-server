@@ -26,14 +26,15 @@ func (req *APIBrokerOrderSignatureReq) CheckData() error {
 		return fmt.Errorf("chainId not provided")
 	}
 	if req.Order.Deadline == 0 {
-		return fmt.Errorf("request requires order with IDeadline")
+		return fmt.Errorf("request requires order with iDeadline")
 	}
 	zeroAddr := common.Address{}.Hex()
-	if req.Order.TraderAddr == zeroAddr {
-		return fmt.Errorf("order requires order with non-zero TraderAddr")
+	if req.Order.TraderAddr == zeroAddr ||
+		req.Order.TraderAddr == "" {
+		return fmt.Errorf("order requires order with non-zero traderAddr")
 	}
 	if req.Order.PerpetualId == 0 {
-		return fmt.Errorf("request requires order with IPerpetualId")
+		return fmt.Errorf("request requires order with iPerpetualId")
 	}
 
 	return nil

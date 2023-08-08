@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/D8-X/d8x-broker-server/src/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -71,7 +72,12 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 	var req utils.APIBrokerOrderSignatureReq
 	err := json.Unmarshal([]byte(jsonData), &req)
 	if err != nil {
-		http.Error(w, string(formatError(err.Error())), http.StatusBadRequest)
+		errMsg := `Wrong argument types. Usage: 
+			{'order': {'traderAddr': '0xABCD..', 'iDeadline': 1688347462, 'iPerpetualId': 10001},
+			'chainId': 80001}`
+		errMsg = strings.ReplaceAll(errMsg, "\t", "")
+		errMsg = strings.ReplaceAll(errMsg, "\n", "")
+		http.Error(w, string(formatError(errMsg)), http.StatusBadRequest)
 		return
 	}
 	err = req.CheckData()
