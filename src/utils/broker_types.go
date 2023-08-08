@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 
-	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -38,11 +37,6 @@ func (req *APIBrokerOrderSignatureReq) CheckData() error {
 	}
 
 	return nil
-}
-
-type APIBrokerPaySignatureReq struct {
-	Payment           d8x_futures.PaySummary `json:"payment"`
-	ExecutorSignature string                 `json:"signature"`
 }
 
 // Required data to sign: iPerpetualId: number, brokerFeeTbps: number, traderAddr: string, iDeadline: number,

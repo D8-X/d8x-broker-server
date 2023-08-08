@@ -28,7 +28,7 @@ func NewSignaturePen(privateKeyHex string, config []ChainConfig) (SignaturePen, 
 	return pen, nil
 }
 
-func (p *SignaturePen) RecoverPaymentSignerAddr(ps APIBrokerPaySignatureReq) (common.Address, error) {
+func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatureReq) (common.Address, error) {
 	sig, err := d8x_futures.BytesFromHexString(ps.ExecutorSignature)
 	if err != nil {
 		return common.Address{}, err
@@ -44,7 +44,7 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps APIBrokerPaySignatureReq) (co
 	return addr, nil
 }
 
-func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps APIBrokerPaySignatureReq) ([]byte, error) {
+func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPaySignatureReq) ([]byte, error) {
 	ctrct := p.Config[ps.Payment.ChainId].MultiPayCtrctAddr
 	if ctrct != ps.Payment.MultiPayCtrct {
 		return nil, fmt.Errorf("Multipay ctrct mismatch")

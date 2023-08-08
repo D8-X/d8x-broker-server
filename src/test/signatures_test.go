@@ -114,7 +114,7 @@ func TestSignPayment(t *testing.T) {
 	}
 	_, sg, err := d8x_futures.CreatePaymentBrokerSignature(summary, execWallet)
 
-	data := utils.APIBrokerPaySignatureReq{
+	data := d8x_futures.BrokerPaySignatureReq{
 		Payment:           summary,
 		ExecutorSignature: sg,
 	}

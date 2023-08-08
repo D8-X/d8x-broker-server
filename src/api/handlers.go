@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/D8-X/d8x-broker-server/src/utils"
+	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -107,8 +108,8 @@ func SignPayment(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen)
 	}
 
 	// Parse the JSON payload
-	var req utils.APIBrokerPaySignatureReq
-	err := json.Unmarshal([]byte(jsonData), &req)
+	var req d8x_futures.BrokerPaySignatureReq
+	err := req.UnmarshalJSON([]byte(jsonData))
 	if err != nil {
 		errMsg := `Wrong argument types. Usage: {
 			'payment': {
@@ -117,7 +118,7 @@ func SignPayment(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen)
 				'token': '0x2d10075E54356E16Ebd5C6BB5194290709B69C1e', 
 				'timestamp': 1691249493, 
 				'id': 1,
-				'totalAmount': 1000000000000000000,
+				'totalAmount': '1000000000000000000',
 				'chainId': 80001,
 				'multiPayCtrct': '0x30b55550e02B663E15A95B50850ebD20363c2AD5'
 			},
