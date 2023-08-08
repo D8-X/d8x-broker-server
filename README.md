@@ -11,12 +11,12 @@ Build with `go build cmd/main.go`
 You can then build and run the Docker image:
 ```
 $ docker build -t broker-server . -f cmd/Dockerfile
-$ dockerun -p 8000:8000 broker-server
+$ docker run -p 8000:8000 broker-server
 ```
 note: as long as the repo is private, use:
 ```
 $ docker build -t broker-server . -f cmd/Dockerfile --build-arg GITHUB_USER=<youruser> --build-arg GITHUB_TOKEN=<yourtoken>
-$ dockerun -p 8000:8000 broker-server
+$ docker run -p 8000:8000 broker-server
 ```
 
 # Endpoints
