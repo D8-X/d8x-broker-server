@@ -33,8 +33,11 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps APIBrokerPaySignatureReq) (co
 	if err != nil {
 		return common.Address{}, err
 	}
-	ctrct := p.Config[ps.ChainId].MultiPayCtrctAddr
-	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sig, ctrct, ps.Payment, ps.ChainId)
+	ctrct := p.Config[ps.Payment.ChainId].MultiPayCtrctAddr
+	if ctrct != ps.Payment.MultiPayCtrct {
+		return common.Address{}, fmt.Errorf("Multipay ctrct mismatch")
+	}
+	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sig, ps.Payment)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -42,8 +45,11 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps APIBrokerPaySignatureReq) (co
 }
 
 func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps APIBrokerPaySignatureReq) ([]byte, error) {
-	ctrct := p.Config[ps.ChainId].MultiPayCtrctAddr
-	_, sig, err := d8x_futures.CreatePaymentBrokerSignature(ctrct, ps.Payment, ps.ChainId, p.Wallets[ps.ChainId])
+	ctrct := p.Config[ps.Payment.ChainId].MultiPayCtrctAddr
+	if ctrct != ps.Payment.MultiPayCtrct {
+		return nil, fmt.Errorf("Multipay ctrct mismatch")
+	}
+	_, sig, err := d8x_futures.CreatePaymentBrokerSignature(ps.Payment, p.Wallets[ps.Payment.ChainId])
 	if err != nil {
 		return nil, err
 	}

@@ -125,8 +125,8 @@ func SignPayment(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen)
 		fmt.Fprintf(w, response)
 		return
 	}
-	// signature correct, check if this is a registered payer
-	if !findExecutor(pen, req.ChainId, addr) {
+	// signature correct, check if this is a registered payment executor
+	if !findExecutor(pen, req.Payment.ChainId, addr) {
 		response := string(formatError("executor not allowed"))
 		fmt.Fprintf(w, response)
 		return

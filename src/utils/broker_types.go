@@ -42,7 +42,6 @@ func (req *APIBrokerOrderSignatureReq) CheckData() error {
 
 type APIBrokerPaySignatureReq struct {
 	Payment           d8x_futures.PaySummary `json:"payment"`
-	ChainId           int64                  `json:"chainId"`
 	ExecutorSignature string                 `json:"signature"`
 }
 

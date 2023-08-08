@@ -93,12 +93,14 @@ func TestSignPayment(t *testing.T) {
 	}
 	multiPayCtrctAddr := common.HexToAddress("0x30b55550e02B663E15A95B50850ebD20363c2AD5")
 	summary := d8x_futures.PaySummary{
-		Payer:       brokerAddr,
-		Executor:    execAddr,
-		Token:       common.HexToAddress("0x2d10075E54356E16Ebd5C6BB5194290709B69C1e"),
-		Timestamp:   1691249493,
-		Id:          1,
-		TotalAmount: big.NewInt(1e18),
+		Payer:         brokerAddr,
+		Executor:      execAddr,
+		Token:         common.HexToAddress("0x2d10075E54356E16Ebd5C6BB5194290709B69C1e"),
+		Timestamp:     1691249493,
+		Id:            1,
+		TotalAmount:   big.NewInt(1e18),
+		ChainId:       80001,
+		MultiPayCtrct: multiPayCtrctAddr,
 	}
 	var execWallet d8x_futures.Wallet
 	pk := fmt.Sprintf("%x", execPk.D)
@@ -106,11 +108,10 @@ func TestSignPayment(t *testing.T) {
 	if err != nil {
 		t.Errorf("error creating wallet")
 	}
-	_, sg, err := d8x_futures.CreatePaymentBrokerSignature(multiPayCtrctAddr, summary, 80001, execWallet)
+	_, sg, err := d8x_futures.CreatePaymentBrokerSignature(summary, execWallet)
 
 	data := utils.APIBrokerPaySignatureReq{
 		Payment:           summary,
-		ChainId:           80001,
 		ExecutorSignature: sg,
 	}
 
@@ -140,7 +141,7 @@ func TestSignPayment(t *testing.T) {
 	if err != nil {
 		t.Errorf("decoding signature: %v", err)
 	}
-	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sigBytes, multiPayCtrctAddr, summary, 80001)
+	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sigBytes, summary)
 	if err != nil {
 		t.Errorf("error RecoverPaymentSignatureAddr")
 	}
