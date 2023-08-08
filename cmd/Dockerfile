@@ -25,7 +25,7 @@ RUN go build -o executable ./cmd/main.go
 FROM golang:1.20 AS stage-release
 COPY --from=stage-build /app/executable /
 COPY --from=stage-build /app/.env /
-COPY --from=stage-build /app/config/chainConfig.json /config/
+COPY --from=stage-build /app/config/live.chainConfig.json /config/
 # Expose the provided API_PORT
 EXPOSE ${API_PORT}
 ENTRYPOINT ["/executable"]
