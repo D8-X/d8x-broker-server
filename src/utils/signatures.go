@@ -40,6 +40,7 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps APIBrokerPaySignatureReq) (co
 	}
 	return addr, nil
 }
+
 func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps APIBrokerPaySignatureReq) ([]byte, error) {
 	ctrct := p.Config[ps.ChainId].MultiPayCtrctAddr
 	_, sig, err := d8x_futures.CreatePaymentBrokerSignature(ctrct, ps.Payment, ps.ChainId, p.Wallets[ps.ChainId])

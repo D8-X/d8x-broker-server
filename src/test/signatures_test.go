@@ -1,6 +1,8 @@
 package test
 
 import (
+	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -65,6 +67,89 @@ func TestSignOrder(t *testing.T) {
 		t.Logf("recovered address correct")
 	} else {
 		t.Errorf("recovering address incorrect")
+	}
+}
+
+func generateKey() (common.Address, *ecdsa.PrivateKey, error) {
+	// Generate a new private key
+	privateKey, err := crypto.GenerateKey()
+	if err != nil {
+		log.Fatal(err)
+		return common.Address{}, nil, err
+	}
+	// Derive the Ethereum address from the private key
+	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
+	return addr, privateKey, err
+}
+
+func TestSignPayment(t *testing.T) {
+	brokerAddr, brokerPk, err := generateKey()
+	if err != nil {
+		log.Fatal(err)
+	}
+	execAddr, execPk, err := generateKey()
+	if err != nil {
+		log.Fatal(err)
+	}
+	multiPayCtrctAddr := common.HexToAddress("0x30b55550e02B663E15A95B50850ebD20363c2AD5")
+	summary := d8x_futures.PaySummary{
+		Payer:       brokerAddr,
+		Executor:    execAddr,
+		Token:       common.HexToAddress("0x2d10075E54356E16Ebd5C6BB5194290709B69C1e"),
+		Timestamp:   1691249493,
+		Id:          1,
+		TotalAmount: big.NewInt(1e18),
+	}
+	var execWallet d8x_futures.Wallet
+	pk := fmt.Sprintf("%x", execPk.D)
+	err = execWallet.NewWallet(pk, 80001, nil)
+	if err != nil {
+		t.Errorf("error creating wallet")
+	}
+	_, sg, err := d8x_futures.CreatePaymentBrokerSignature(multiPayCtrctAddr, summary, 80001, execWallet)
+
+	data := utils.APIBrokerPaySignatureReq{
+		Payment:           summary,
+		ChainId:           80001,
+		ExecutorSignature: sg,
+	}
+
+	config, err := config.LoadChainConfig("../../config/chainConfig.json")
+	if err != nil {
+		t.Errorf("loading deploymentconfig: %v", err)
+		return
+	}
+	pkBrker := fmt.Sprintf("%x", brokerPk.D)
+	pen, err := utils.NewSignaturePen(pkBrker, config)
+	jsonRes, err := pen.GetBrokerPaymentSignatureResponse(data)
+	if err != nil {
+		t.Errorf("GetBrokerPaymentSignatureResponse: %v", err)
+		return
+	}
+	type SignatureData struct {
+		BrokerSignature string `json:"brokerSignature"`
+	}
+	var brokerSig SignatureData
+	err = json.Unmarshal(jsonRes, &brokerSig)
+	if err != nil {
+		t.Errorf("Unmarshal GetBrokerPaymentSignatureResponse: %v", err)
+		return
+	}
+	// recover again
+	sigBytes, err := d8x_futures.BytesFromHexString(brokerSig.BrokerSignature)
+	if err != nil {
+		t.Errorf("decoding signature: %v", err)
+	}
+	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sigBytes, multiPayCtrctAddr, summary, 80001)
+	if err != nil {
+		t.Errorf("error RecoverPaymentSignatureAddr")
+	}
+	t.Log("recovered addr = ", addr.String())
+	t.Log("signer    addr = ", brokerAddr.String())
+	if addr != brokerAddr {
+		t.Errorf("error wrong address recovered")
+	} else {
+		t.Logf("recovered address correct")
 	}
 }
 
