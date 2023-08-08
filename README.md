@@ -3,7 +3,10 @@
 server to be used as remote broker by trader back-end
 
 ## Run
-Build `go build cmd/main.go`
+Copy configuration and edit allowedExecutors (addresses which are permissioned to execute payments):
+`cp config/shared.chainConfig.json config/live.chainConfig.json` and
+`nano config/live.chainConfig.json` to edit.
+Build with `go build cmd/main.go`
 
 You can then build and run the Docker image:
 ```
@@ -16,7 +19,7 @@ $ docker build -t broker-server . -f cmd/Dockerfile --build-arg GITHUB_USER=<you
 $ dockerun -p 8000:8000 broker-server
 ```
 
-# Endpoints (WIP!)
+# Endpoints
 
 GET: /broker-address
 
@@ -56,18 +59,28 @@ POST: sign-payment
 ```
 {
     "payment": {
-        "payer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 
-        "executor": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", 
-        "token": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512", 
-        "timestamp": 1688518335, 
-        "id": 42,
-        "totalAmount": 1000
+        "payer": "0x4Fdc785fe2C6812960C93CA2F9D12b5Bd21ea2a1", 
+        "executor": "0xDa47a0CAc77D50114F2725D06a2Ce887cF9f4D98", 
+        "token": "0x2d10075E54356E16Ebd5C6BB5194290709B69C1e", 
+        "timestamp": 1691249493, 
+        "id": 1,
+        "totalAmount": 1000000000000000000,
+        "chainId": 80001,
+        "multiPayCtrct": "0x30b55550e02B663E15A95B50850ebD20363c2AD5"
     },
-    "chainId": 80001,
-    "signature": "0x3ba983fd03c309252904d8fb8fb49943a89698fb28545df2cc3cb581a19272ac0875fa23c4b617b9c7dde41553f5a9ef38896358bd3c36f983357fde4336c4f61b"
+    "signature": "0x368e159104505a22a8bef736d0bbd190ffdeaa9030d76841e831082d4b0469ce22a034ed9672dd88324e22f479b08aa5c6729d3319c1d3db1b535068d86866571c"
 }
 ```
 Response:
 ```
 {"BrokerSignature": "0x..."},
 ```
+Errors:
+1. `{"error":"wrong signature"}`
+The executor has to sign the payment data cryptographically. If the executor-address cannot be recovered from the signed data,
+this is the error.
+
+2. `{"error":"executor not allowed"}`
+
+Executors are permissioned in `live.chainConfig.json`
+

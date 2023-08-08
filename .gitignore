@@ -24,3 +24,6 @@ go.work
 .env
 main
 __debug*
+
+# config
+live.*.json
