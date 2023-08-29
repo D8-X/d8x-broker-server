@@ -10,4 +10,7 @@ const (
 	BROKER_KEY = "BROKER_KEY"
 	// Broker fee in tenth of bps
 	BROKER_FEE_TBPS = "BROKER_FEE_TBPS"
+
+	// chainConfig.json configuration file path
+	CONFIG_PATH = "CONFIG_PATH"
 )

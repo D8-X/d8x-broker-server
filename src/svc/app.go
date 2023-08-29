@@ -17,7 +17,8 @@ func Run() {
 		log.Fatalf("creating logger: %v", err)
 	}
 	loadEnv(l)
-	config, err := config.LoadChainConfig("../config/live.chainConfig.json")
+
+	config, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
 		log.Fatalf("loading deploymentconfig: %v", err)
 	}
@@ -42,7 +43,7 @@ func Run() {
 
 func loadEnv(l *zap.Logger) {
 
-	viper.SetConfigFile("../.env")
+	viper.SetConfigFile(".env")
 	if err := viper.ReadInConfig(); err != nil {
 		l.Warn("could not load .env file", zap.Error(err))
 	}
@@ -53,6 +54,7 @@ func loadEnv(l *zap.Logger) {
 	requiredEnvs := []string{
 		env.BROKER_KEY,
 		env.BROKER_FEE_TBPS,
+		env.CONFIG_PATH,
 	}
 
 	for _, e := range requiredEnvs {
