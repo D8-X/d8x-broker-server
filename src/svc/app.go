@@ -48,6 +48,8 @@ func loadEnv(l *zap.Logger) {
 		l.Warn("could not load .env file", zap.Error(err))
 	}
 
+	viper.AutomaticEnv()
+
 	viper.SetDefault(env.API_BIND_ADDR, "")
 	viper.SetDefault(env.API_PORT, "8000")
 
