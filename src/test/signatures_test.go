@@ -21,13 +21,14 @@ func TestSignOrder(t *testing.T) {
 
 	// Generate a new private key
 	privateKey, err := crypto.GenerateKey()
+	//privateKey, err := crypto.HexToECDSA("yourprivatekey")
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Derive the Ethereum address from the private key
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	config, err := config.LoadChainConfig("../../config/example.chainConfig.json")
+	config, err := config.LoadChainConfig("../../config/shared.chainConfig.json")
 	if err != nil {
 		t.Errorf("loading deploymentconfig: %v", err)
 		return
@@ -55,15 +56,18 @@ func TestSignOrder(t *testing.T) {
 	}
 	fmt.Println("digest = ", digestBytes)
 	addrRecovered, err := d8x_futures.RecoverEvmAddress(digestBytes, sigBytes)
+	v := addrRecovered.String()
+	v0 := addr.String()
 	if err != nil {
 		t.Errorf("recovering address: %v", err)
 	} else {
 		t.Logf("recovered address")
-		t.Logf(addrRecovered.String())
+		t.Logf(v)
 	}
-	t.Log("recovered addr = ", addrRecovered.String())
-	t.Log("signer    addr = ", addr.String())
-	if addrRecovered.String() == addr.String() {
+
+	t.Log("recovered addr = ", v)
+	t.Log("signer    addr = ", v0)
+	if v == v0 {
 		t.Logf("recovered address correct")
 	} else {
 		t.Errorf("recovering address incorrect")
