@@ -1,10 +1,13 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/redis/rueidis"
 )
 
 type ChainConfig struct {
@@ -70,4 +73,34 @@ type APIBrokerSignatureRes struct {
 
 type APIBrokerFeeRes struct {
 	BrokerFeeTbps uint16
+}
+
+type RueidisClient struct {
+	Client *rueidis.Client
+	Ctx    context.Context
+}
+
+const channelNewOrder = "new-order"
+const stackNewOrder = "new-order"
+
+// we store the order in redis with the order id as key, push the order id to the stack,
+// and publish a message
+func (r *RueidisClient) PubOrder(order APIOrderSig, orderId string) error {
+	err := (*r.Client).Do(r.Ctx, (*r.Client).B().Hset().Key(orderId).FieldValue().
+		FieldValue("PerpetualId", strconv.Itoa(int(order.PerpetualId))).
+		FieldValue("Deadline", strconv.Itoa(int(order.Deadline))).
+		FieldValue("Flags", strconv.Itoa(int(order.Flags))).
+		FieldValue("FAmount", order.FAmount.String()).
+		FieldValue("FLimitPrice", order.FLimitPrice.String()).
+		FieldValue("FTriggerPrice", order.FTriggerPrice.String()).
+		FieldValue("ExecutionTimestamp", strconv.Itoa(int(order.ExecutionTimestamp))).Build()).Error()
+	if err != nil {
+		return err
+	}
+	(*r.Client).Do(r.Ctx, (*r.Client).B().Lpush().Key(stackNewOrder).Element(orderId).Build())
+	err = (*r.Client).Do(r.Ctx, (*r.Client).B().Publish().Channel(channelNewOrder).Message(orderId).Build()).Error()
+	if err != nil {
+		return err
+	}
+	return nil
 }

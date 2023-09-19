@@ -69,7 +69,7 @@ func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPa
 	return jsonResponse, nil
 }
 
-func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainId int64) ([]byte, error) {
+func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainId int64, redis *RueidisClient) ([]byte, error) {
 	var perpOrder = d8x_futures.IPerpetualOrderOrder{
 		// data for broker signature
 		BrokerFeeTbps: order.BrokerFeeTbps,
@@ -100,6 +100,7 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 		OrderDigest:     digest,
 		OrderId:         orderId,
 	}
+	redis.PubOrder(order, orderId)
 	// Marshal the struct into JSON
 	jsonResponse, err := json.Marshal(res)
 	if err != nil {

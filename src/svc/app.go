@@ -38,7 +38,9 @@ func Run() {
 		Pen:           pen,
 		BrokerFeeTbps: fee,
 	}
-	app.StartApiServer()
+
+	app.StartApiServer(viper.GetString(env.REDIS_ADDR),
+		viper.GetString(env.REDIS_PW))
 
 }
 
@@ -58,6 +60,8 @@ func loadEnv() error {
 		env.BROKER_KEY,
 		env.BROKER_FEE_TBPS,
 		env.CONFIG_PATH,
+		env.REDIS_ADDR,
+		env.REDIS_PW,
 	}
 
 	for _, e := range requiredEnvs {
