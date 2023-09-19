@@ -8,11 +8,29 @@ import (
 	"github.com/D8-X/d8x-broker-server/src/api"
 	"github.com/D8-X/d8x-broker-server/src/config"
 	"github.com/D8-X/d8x-broker-server/src/env"
+	"github.com/D8-X/d8x-broker-server/src/executorws"
 	"github.com/D8-X/d8x-broker-server/src/utils"
 	"github.com/spf13/viper"
 )
 
-func Run() {
+func RunExecutorWs() {
+	err := loadEnv()
+	if err != nil {
+		slog.Error("loading env: " + err.Error())
+		return
+	}
+	config, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
+	if err != nil {
+		slog.Error("loading deploymentconfig: " + err.Error())
+		return
+	}
+	wsAddr := viper.GetString(env.WS_ADDR)
+	redisAddr := viper.GetString(env.REDIS_ADDR)
+	redisPw := viper.GetString(env.REDIS_PW)
+	executorws.StartWSServer(config, wsAddr, redisAddr, redisPw)
+}
+
+func RunBroker() {
 
 	err := loadEnv()
 	if err != nil {

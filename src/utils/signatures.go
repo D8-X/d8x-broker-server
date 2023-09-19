@@ -100,7 +100,7 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 		OrderDigest:     digest,
 		OrderId:         orderId,
 	}
-	redis.PubOrder(order, orderId)
+	redis.PubOrder(order, orderId, chainId)
 	// Marshal the struct into JSON
 	jsonResponse, err := json.Marshal(res)
 	if err != nil {

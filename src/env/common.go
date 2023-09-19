@@ -13,6 +13,7 @@ const (
 	// REDIS connection string
 	REDIS_ADDR = "REDIS_ADDR"
 	REDIS_PW   = "REDIS_PW"
+	WS_ADDR    = "WS_ADDR"
 	// chainConfig.json configuration file path
 	CONFIG_PATH = "CONFIG_PATH"
 )

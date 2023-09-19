@@ -84,3 +84,25 @@ this is the error.
 
 Executors are permissioned in `live.chainConfig.json`
 
+# Websocket for executors
+Subscribe to order signature requests for a perpetual and chain, for example
+
+```
+{
+    "type": "subscribe",
+    "topic": "100001:1442"
+}
+```
+The server will respond with an acknowledgement if the subscription seems ok (no check on perpetual id existence):
+```
+{
+    "type": "subscribe",
+    "topic": "100001:1442"
+    "data": "ack"
+}
+```
+
+# REDIS
+
+Upon signature of a new order, there is a Redis pub message `CHANNEL_NEW_ORDER` ("new-order")
+with message "perpetualId:chainId".

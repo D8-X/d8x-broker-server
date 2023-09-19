@@ -80,14 +80,15 @@ type RueidisClient struct {
 	Ctx    context.Context
 }
 
-const channelNewOrder = "new-order"
-const stackNewOrder = "new-order"
+const CHANNEL_NEW_ORDER = "new-order"
+const STACK_NEW_ORDER = "new-order"
 
 // we store the order in redis with the order id as key, push the order id to the stack,
 // and publish a message
-func (r *RueidisClient) PubOrder(order APIOrderSig, orderId string) error {
+func (r *RueidisClient) PubOrder(order APIOrderSig, orderId string, chainId int64) error {
+	perpetualIdStr := strconv.Itoa(int(order.PerpetualId))
 	err := (*r.Client).Do(r.Ctx, (*r.Client).B().Hset().Key(orderId).FieldValue().
-		FieldValue("PerpetualId", strconv.Itoa(int(order.PerpetualId))).
+		FieldValue("PerpetualId", perpetualIdStr).
 		FieldValue("Deadline", strconv.Itoa(int(order.Deadline))).
 		FieldValue("Flags", strconv.Itoa(int(order.Flags))).
 		FieldValue("FAmount", order.FAmount.String()).
@@ -97,10 +98,17 @@ func (r *RueidisClient) PubOrder(order APIOrderSig, orderId string) error {
 	if err != nil {
 		return err
 	}
-	(*r.Client).Do(r.Ctx, (*r.Client).B().Lpush().Key(stackNewOrder).Element(orderId).Build())
-	err = (*r.Client).Do(r.Ctx, (*r.Client).B().Publish().Channel(channelNewOrder).Message(orderId).Build()).Error()
+	(*r.Client).Do(r.Ctx, (*r.Client).B().Lpush().Key(STACK_NEW_ORDER).Element(orderId).Build())
+	msg := perpetualIdStr + ":" + strconv.Itoa(int(chainId))
+	err = (*r.Client).Do(r.Ctx, (*r.Client).B().Publish().Channel(CHANNEL_NEW_ORDER).Message(msg).Build()).Error()
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (r *RueidisClient) Subscribe(channel string, fn func(msg rueidis.PubSubMessage)) error {
+	client := (*r.Client)
+	err := client.Receive(r.Ctx, client.B().Subscribe().Channel(channel).Build(), fn)
+	return err
 }
