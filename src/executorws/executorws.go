@@ -40,17 +40,12 @@ func StartWSServer(config_ []utils.ChainConfig, WS_ADDR string, REDIS_ADDR strin
 		Client: &client,
 		Ctx:    context.Background(),
 	}
-	err = server.RedisClient.Subscribe(utils.CHANNEL_NEW_ORDER, handleNewOrder)
+	err = server.RedisClient.Subscribe(utils.CHANNEL_NEW_ORDER, server.handleNewOrder)
 	if err != nil {
 		return err
 	}
 	http.HandleFunc("/ws", HandleWs)
 	return nil
-}
-
-// handle Redis message from CHANNEL_NEW_ORDER
-func handleNewOrder(msg rueidis.PubSubMessage) {
-	slog.Info("Received message:" + msg.Message)
 }
 
 func HandleWs(w http.ResponseWriter, r *http.Request) {

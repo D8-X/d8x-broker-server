@@ -12,6 +12,7 @@ import (
 
 	"github.com/D8-X/d8x-broker-server/src/utils"
 	"github.com/gorilla/websocket"
+	"github.com/redis/rueidis"
 )
 
 // Subscriptions is a type for each string of topic and the clients that subscribe to it
@@ -169,4 +170,17 @@ func errorResponse(reqType string, reqTopic string, msg string) []byte {
 		slog.Error("forming error response")
 	}
 	return jsonData
+}
+
+// handle Redis message from CHANNEL_NEW_ORDER
+func (s *Server) handleNewOrder(msg rueidis.PubSubMessage) {
+	slog.Info("Received message:" + msg.Message)
+	topic := msg.Message
+	// get the order-id
+	client := *s.RedisClient.Client
+	oId, err := client.Do(s.RedisClient.Ctx, client.B().Lpop().Key(topic).Build()).ToString()
+	if err != nil {
+		slog.Error("Error handleNewOrder:" + err.Error())
+	}
+	slog.Info("New order id =" + oId)
 }
