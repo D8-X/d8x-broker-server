@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -66,7 +67,7 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 	var jsonData []byte
 	if r.Body != nil {
 		defer r.Body.Close()
-		jsonData, _ = ioutil.ReadAll(r.Body)
+		jsonData, _ = io.ReadAll(r.Body)
 	}
 
 	// Parse the JSON payload
