@@ -1,26 +1,28 @@
 package svc
 
 import (
+	"errors"
 	"log"
+	"log/slog"
 
 	"github.com/D8-X/d8x-broker-server/src/api"
 	"github.com/D8-X/d8x-broker-server/src/config"
 	"github.com/D8-X/d8x-broker-server/src/env"
 	"github.com/D8-X/d8x-broker-server/src/utils"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 func Run() {
-	l, err := GetDefaultLogger()
-	if err != nil {
-		log.Fatalf("creating logger: %v", err)
-	}
-	loadEnv(l)
 
+	err := loadEnv()
+	if err != nil {
+		slog.Error("loading env: " + err.Error())
+		return
+	}
 	config, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
-		log.Fatalf("loading deploymentconfig: %v", err)
+		slog.Error("loading deploymentconfig: " + err.Error())
+		return
 	}
 	pk := viper.GetString(env.BROKER_KEY)
 	pen, err := utils.NewSignaturePen(pk, config)
@@ -28,10 +30,9 @@ func Run() {
 		log.Fatalf("unable to create signature pen: %v", err)
 	}
 	fee := uint16(viper.GetInt32(env.BROKER_FEE_TBPS))
-	l.Info("starting REST API server")
+	slog.Info("starting REST API server")
 	// Start the rest api
 	app := &api.App{
-		Logger:        l,
 		Port:          viper.GetString(env.API_PORT),
 		BindAddr:      viper.GetString(env.API_BIND_ADDR),
 		Pen:           pen,
@@ -41,11 +42,11 @@ func Run() {
 
 }
 
-func loadEnv(l *zap.Logger) {
+func loadEnv() error {
 
 	viper.SetConfigFile(".env")
 	if err := viper.ReadInConfig(); err != nil {
-		l.Warn("could not load .env file", zap.Error(err))
+		return errors.New("could not load .env file" + err.Error())
 	}
 
 	viper.AutomaticEnv()
@@ -61,7 +62,8 @@ func loadEnv(l *zap.Logger) {
 
 	for _, e := range requiredEnvs {
 		if !viper.IsSet(e) {
-			l.Fatal("required environment variable not set", zap.String("variable", e))
+			return errors.New("required environment variable not set variable" + e)
 		}
 	}
+	return nil
 }

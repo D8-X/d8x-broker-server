@@ -1,17 +1,17 @@
 package api
 
 import (
+	"errors"
+	"log/slog"
 	"net"
 	"net/http"
 
 	"github.com/D8-X/d8x-broker-server/src/utils"
 	"github.com/go-chi/chi/v5"
-	"go.uber.org/zap"
 )
 
 // App is dependency container for API server
 type App struct {
-	Logger        *zap.Logger
 	Port          string
 	BindAddr      string
 	Pen           utils.SignaturePen
@@ -19,9 +19,9 @@ type App struct {
 }
 
 // StartApiServer initializes and starts the api server. This func is blocking
-func (a *App) StartApiServer() {
+func (a *App) StartApiServer() error {
 	if len(a.Port) == 0 {
-		a.Logger.Fatal("could not start the API server, Port must be provided")
+		return errors.New("could not start the API server, Port must be provided")
 	}
 
 	router := chi.NewRouter()
@@ -32,10 +32,10 @@ func (a *App) StartApiServer() {
 		a.BindAddr,
 		a.Port,
 	)
-	a.Logger.Info("starting api server", zap.String("host_port", addr))
+	slog.Info("starting api server host_port " + addr)
 	err := http.ListenAndServe(
 		addr,
 		router,
 	)
-	a.Logger.Fatal("api server is shutting down", zap.Error(err))
+	return errors.New("api server is shutting down" + err.Error())
 }
