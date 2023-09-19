@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -39,21 +40,32 @@ func (req *APIBrokerOrderSignatureReq) CheckData() error {
 	return nil
 }
 
-// Required data to sign: iPerpetualId: number, brokerFeeTbps: number, traderAddr: string, iDeadline: number,
+//	Required data for the broker-signature: \
+//		iPerpetualId: number, brokerFeeTbps: number, traderAddr: string, iDeadline: number,
 //
-//	chainId: number, proxyAddress: string
+//		chainId: number, proxyAddress: string
 type APIOrderSig struct {
-	PerpetualId   int32  `json:"iPerpetualId"`
-	BrokerFeeTbps uint16 `json:"brokerFeeTbps"`
-	BrokerAddr    string `json:"brokerAddr"`
-	TraderAddr    string `json:"traderAddr"`
-	Deadline      uint32 `json:"iDeadline"`
+	PerpetualId   int32  `json:"iPerpetualId"`  // broker sig
+	BrokerFeeTbps uint16 `json:"brokerFeeTbps"` // broker sig
+	BrokerAddr    string `json:"brokerAddr"`    // broker sig
+	TraderAddr    string `json:"traderAddr"`    // broker sig
+	Deadline      uint32 `json:"iDeadline"`     // broker sig
+	// relevant for order digest
+	Flags              uint32   `json:"flags"`
+	FAmount            *big.Int `json:"fAmount"`
+	FLimitPrice        *big.Int `json:"fLimitPrice"`
+	FTriggerPrice      *big.Int `json:"fTriggerPrice"`
+	LeverageTDR        uint16   `json:"leverageTDR"`
+	BrokerSignature    []byte   `json:"brokerSignature"`
+	ExecutionTimestamp uint32   `json:"executionTimestamp"`
 }
 
 type APIBrokerSignatureRes struct {
 	Order           APIOrderSig `json:"orderFields"`
 	ChainId         int64       `json:"chainId"`
 	BrokerSignature string      `json:"brokerSignature"`
+	OrderDigest     string      `json:"orderDigest"`
+	OrderId         string      `json:"orderId"`
 }
 
 type APIBrokerFeeRes struct {

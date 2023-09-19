@@ -1,12 +1,15 @@
 package utils
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 
 	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
+	solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
 
 // SignaturePen stores the chainId <-> deployment address mappings,
@@ -68,6 +71,7 @@ func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPa
 
 func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainId int64) ([]byte, error) {
 	var perpOrder = d8x_futures.IPerpetualOrderOrder{
+		// data for broker signature
 		BrokerFeeTbps: order.BrokerFeeTbps,
 		TraderAddr:    common.HexToAddress(order.TraderAddr),
 		BrokerAddr:    common.HexToAddress(order.BrokerAddr),
@@ -78,11 +82,23 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 	if err != nil {
 		return nil, err
 	}
+	sigBytes, err := d8x_futures.BytesFromHexString(sig)
+	if err != nil {
+		return []byte{}, errors.New("decoding signature: " + err.Error())
+	}
+	// order digest
+	order.BrokerSignature = sigBytes
 	order.BrokerAddr = p.Wallets[chainId].Address.String()
+	digest, orderId, err := p.createOrderDigest(order, chainId)
+	if err != nil {
+		return []byte{}, errors.New("decoding signature: " + err.Error())
+	}
 	res := APIBrokerSignatureRes{
 		Order:           order,
 		ChainId:         chainId,
 		BrokerSignature: sig,
+		OrderDigest:     digest,
+		OrderId:         orderId,
 	}
 	// Marshal the struct into JSON
 	jsonResponse, err := json.Marshal(res)
@@ -90,6 +106,36 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 		return nil, err
 	}
 	return jsonResponse, nil
+}
+
+func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (string, string, error) {
+	perpId := new(big.Int).SetInt64(int64(order.PerpetualId))
+
+	var co d8x_futures.IClientOrderClientOrder
+	co.BrokerAddr = common.HexToAddress(order.BrokerAddr)
+	co.IPerpetualId = perpId
+	co.FLimitPrice = order.FLimitPrice
+	co.LeverageTDR = order.LeverageTDR
+	co.ExecutionTimestamp = order.ExecutionTimestamp
+	co.Flags = order.Flags
+	co.IDeadline = order.Deadline
+	co.BrokerAddr = common.HexToAddress(order.BrokerAddr)
+	co.FTriggerPrice = order.FTriggerPrice
+	co.FAmount = order.FAmount
+	co.TraderAddr = common.HexToAddress(order.TraderAddr)
+	co.BrokerFeeTbps = order.BrokerFeeTbps
+	co.BrokerSignature = order.BrokerSignature
+	d, err := d8x_futures.CreateOrderDigest(co, int(chainId), true, p.Config[chainId].PerpetualManagerProxyAddr.String())
+	if err != nil {
+		return "", "", err
+	}
+	digestBytes, err := hex.DecodeString(d)
+	if err != nil {
+		return "", "", err
+	}
+	dsol := solsha3.SoliditySHA3WithPrefix(digestBytes)
+	orderId := hex.EncodeToString(dsol)
+	return d, orderId, nil
 }
 
 func (p *SignaturePen) SignOrder(order d8x_futures.IPerpetualOrderOrder, chainId int64) (string, string, error) {
@@ -104,7 +150,6 @@ func (p *SignaturePen) SignOrder(order d8x_futures.IPerpetualOrderOrder, chainId
 		order.TraderAddr.String(), order.IDeadline)
 	//proxyAddr common.Address, chainId int64, brokerWallet Wallet,
 	//iPerpetualId int32, brokerFeeTbps uint32, traderAddr string, iDeadline uint3
-
 	return digest, sig, err
 }
 
