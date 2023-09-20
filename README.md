@@ -85,20 +85,31 @@ this is the error.
 Executors are permissioned in `live.chainConfig.json`
 
 # Websocket for executors
-Subscribe to order signature requests for a perpetual and chain, for example
+Subscribe to order signature requests for a perpetual and chain separated
+by colon (:), for example
 
 ```
 {
     "type": "subscribe",
-    "topic": "100001:1442"
+    "topic": "100002:1442"
 }
 ```
 The server will respond with an acknowledgement if the subscription seems ok (no check on perpetual id existence):
 ```
 {
     "type": "subscribe",
-    "topic": "100001:1442",
+    "topic": "100002:1442",
     "data": "ack"
+}
+```
+Errors are returned in the following form:
+```
+{
+ "type":"subscribe",
+ "topic":"1002:1442",
+ "data": {
+    "error": "usage: perpetualId:chainId"
+    }
 }
 ```
 Updates are returned of the following form:
@@ -107,7 +118,8 @@ Updates are returned of the following form:
  "type":"update",
  "topic":"100002:1442",
  "data":{
-    "orderId":"476beb30452f678e262800c22392e2a416dbba6d942c3d7ed884388a8db3d7b3","iDeadline":1688347462,
+    "orderId":"476beb30452f678e262800c22392e2a416dbba6d942c3d7ed884388a8db3d7b3",
+    "iDeadline":1688347462,
     "flags":20,
     "fAmount":"1210000000",
     "fLimitPrice":"2210000000",
@@ -116,7 +128,15 @@ Updates are returned of the following form:
     }
 }
 ```
+The order-id is a hexadecimal number (returned as string) without the "0x"-prefix.
+
 # REDIS
 
 Upon signature of a new order, there is a Redis pub message `CHANNEL_NEW_ORDER` ("new-order")
 with message "perpetualId:chainId".
+Order data is stored in Redis with the key equal to the order-id. The data is set
+to expire after 60 seconds. The order-id is
+added to the Redis stack. Upon receipt of the Redis pub message, the 
+websocket-application loops through the stack of order-id's for the given perpetual
+and chain-id. If the order-id still has associated data (not older than 60s), the
+data is sent to all subscribers.
