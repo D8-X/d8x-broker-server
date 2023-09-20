@@ -23,8 +23,8 @@ services:
     image: ghcr.io/d8-x/d8x-broker-exec-ws:dev
     restart: always
     ports:
-      # Default svc port is 8000
-      - 127.0.0.1:8000:8000
+      # Default svc port is 8080
+      - 127.0.0.1:8080:8080
     environment:
       REDIS_ADDR: "${REDIS_ADDR}"
       REDIS_PW: "${REDIS_PW}"
