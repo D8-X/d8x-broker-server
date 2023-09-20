@@ -40,11 +40,48 @@ func StartWSServer(config_ []utils.ChainConfig, WS_ADDR string, REDIS_ADDR strin
 		Client: &client,
 		Ctx:    context.Background(),
 	}
-	err = server.RedisClient.Subscribe(utils.CHANNEL_NEW_ORDER, server.handleNewOrder)
-	if err != nil {
-		return err
-	}
+	errChanRedis := make(chan error)
+	go func() {
+		err = server.RedisClient.Subscribe(utils.CHANNEL_NEW_ORDER, server.handleNewOrder)
+		if err != nil {
+			errChanRedis <- err
+		}
+	}()
 	http.HandleFunc("/ws", HandleWs)
+	slog.Info("Listening on " + WS_ADDR + "/ws")
+
+	errChanWS := make(chan error)
+	go func() {
+		err = http.ListenAndServe(WS_ADDR, nil)
+		if err != nil {
+			errChanWS <- err
+		}
+	}()
+
+	select {
+	case err := <-errChanWS:
+		if err != nil {
+			// Handle the error here.
+			// You can also choose to return it or take appropriate action.
+			// For example, log the error and exit the program.
+			slog.Error("WS terminated:" + err.Error())
+		} else {
+			// The blocking function completed without an error.
+			// You can continue with your program logic here.
+			slog.Info("WS terminated")
+		}
+	case err := <-errChanRedis:
+		if err != nil {
+			// Handle the error here.
+			// You can also choose to return it or take appropriate action.
+			// For example, log the error and exit the program.
+			slog.Error("REDIS terminated:" + err.Error())
+		} else {
+			// The blocking function completed without an error.
+			// You can continue with your program logic here.
+			slog.Info("REDIS terminated")
+		}
+	}
 	return nil
 }
 

@@ -178,9 +178,55 @@ func (s *Server) handleNewOrder(msg rueidis.PubSubMessage) {
 	topic := msg.Message
 	// get the order-id
 	client := *s.RedisClient.Client
-	oId, err := client.Do(s.RedisClient.Ctx, client.B().Lpop().Key(topic).Build()).ToString()
+	for {
+		oId, err := client.Do(s.RedisClient.Ctx, client.B().Lpop().Key(topic).Build()).ToString()
+		if err != nil {
+			// done (no more elements on stack)
+			break
+		}
+		slog.Info("New order id =" + oId)
+		s.handleOrderId(oId, topic)
+	}
+}
+
+func (s *Server) handleOrderId(oId string, topic string) {
+	client := *s.RedisClient.Client
+	orderStr, err := client.Do(s.RedisClient.Ctx, client.B().Hgetall().Key(oId).Build()).AsStrMap()
 	if err != nil {
 		slog.Error("Error handleNewOrder:" + err.Error())
+		return
 	}
-	slog.Info("New order id =" + oId)
+	if len(orderStr) == 0 {
+		// expired order Id
+		slog.Info(" -- order id expired")
+		return
+	}
+	vd, _ := strconv.Atoi(orderStr["Deadline"])
+	vf, _ := strconv.Atoi(orderStr["Flags"])
+	ve, _ := strconv.Atoi(orderStr["ExecutionTimestamp"])
+	var o = utils.WSOrderResp{
+		OrderId:            oId,
+		Deadline:           uint32(vd),
+		Flags:              uint32(vf),
+		FAmount:            orderStr["FAmount"],
+		FLimitPrice:        orderStr["FLimitPrice"],
+		FTriggerPrice:      orderStr["FTriggerPrice"],
+		ExecutionTimestamp: uint32(ve),
+	}
+	r := ServerResponse{Type: "update", Topic: topic, Data: o}
+	jsonData, err := json.Marshal(r)
+	if err != nil {
+		slog.Error("forming order update")
+		return
+	}
+	// update subscribers
+	clients := server.Subscriptions[topic]
+	var wg sync.WaitGroup
+	for _, conn := range clients {
+		wg.Add(1)
+		go server.SendWithWait(conn, jsonData, &wg)
+	}
+	// wait until all goroutines jobs done
+	wg.Wait()
+
 }

@@ -63,6 +63,17 @@ type APIOrderSig struct {
 	ExecutionTimestamp uint32   `json:"executionTimestamp"`
 }
 
+// Message from executor websocket on signing an order
+type WSOrderResp struct {
+	OrderId            string `json:"orderId"`
+	Deadline           uint32 `json:"iDeadline"`
+	Flags              uint32 `json:"flags"`
+	FAmount            string `json:"fAmount"`
+	FLimitPrice        string `json:"fLimitPrice"`
+	FTriggerPrice      string `json:"fTriggerPrice"`
+	ExecutionTimestamp uint32 `json:"executionTimestamp"`
+}
+
 type APIBrokerSignatureRes struct {
 	Order           APIOrderSig `json:"orderFields"`
 	ChainId         int64       `json:"chainId"`
@@ -81,6 +92,7 @@ type RueidisClient struct {
 }
 
 const CHANNEL_NEW_ORDER = "new-order"
+const EXPIRY_HDATA_SEC = 60
 
 // we store the order in redis with the order id as key, push the order id to the stack,
 // and publish a message
@@ -98,6 +110,9 @@ func (r *RueidisClient) PubOrder(order APIOrderSig, orderId string, chainId int6
 	if err != nil {
 		return err
 	}
+	// set expiry of key
+	(*r.Client).Do(r.Ctx, (*r.Client).B().Expire().Key(orderId).Seconds(EXPIRY_HDATA_SEC).Build())
+
 	stackName := perpetualIdStr + ":" + chainIdStr
 	(*r.Client).Do(r.Ctx, (*r.Client).B().Lpush().Key(stackName).Element(orderId).Build())
 	msg := stackName

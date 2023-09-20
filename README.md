@@ -97,11 +97,25 @@ The server will respond with an acknowledgement if the subscription seems ok (no
 ```
 {
     "type": "subscribe",
-    "topic": "100001:1442"
+    "topic": "100001:1442",
     "data": "ack"
 }
 ```
-
+Updates are returned of the following form:
+```
+{
+ "type":"update",
+ "topic":"100002:1442",
+ "data":{
+    "orderId":"476beb30452f678e262800c22392e2a416dbba6d942c3d7ed884388a8db3d7b3","iDeadline":1688347462,
+    "flags":20,
+    "fAmount":"1210000000",
+    "fLimitPrice":"2210000000",
+    "fTriggerPrice":"4210000000",
+    "executionTimestamp":1695128060
+    }
+}
+```
 # REDIS
 
 Upon signature of a new order, there is a Redis pub message `CHANNEL_NEW_ORDER` ("new-order")
