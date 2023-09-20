@@ -1,23 +1,12 @@
 # d8x-broker-server
 
-server to be used as remote broker by trader back-end
+- Server to be used as remote broker by trader back-end
+- Also contains a websocket for executors to be informed about
+ new orders
 
 ## Run
-Copy configuration and edit allowedExecutors (addresses which are permissioned to execute payments):
-`cp config/example.chainConfig.json config/live.chainConfig.json` and
-`nano config/live.chainConfig.json` to edit.
-Build with `go build cmd/main.go`
-
-You can then build and run the Docker image:
-```
-$ docker build -t broker-server . -f cmd/Dockerfile
-$ docker run -p 8000:8000 broker-server
-```
-note: as long as the repo is private, use:
-```
-$ docker build -t broker-server . -f cmd/Dockerfile --build-arg GITHUB_USER=<youruser> --build-arg GITHUB_TOKEN=<yourtoken>
-$ docker run -p 8000:8000 broker-server
-```
+The recommended setup is together with the entire backend:
+[D8-X/d8x-cli/](https://github.com/D8-X/d8x-cli/)
 
 # Endpoints
 
