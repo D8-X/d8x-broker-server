@@ -27,7 +27,10 @@ func RunExecutorWs() {
 	wsAddr := viper.GetString(env.WS_ADDR)
 	redisAddr := viper.GetString(env.REDIS_ADDR)
 	redisPw := viper.GetString(env.REDIS_PW)
-	executorws.StartWSServer(config, wsAddr, redisAddr, redisPw)
+	err = executorws.StartWSServer(config, wsAddr, redisAddr, redisPw)
+	if err != nil {
+		slog.Error("Executor WS server: " + err.Error())
+	}
 }
 
 func RunBroker() {
