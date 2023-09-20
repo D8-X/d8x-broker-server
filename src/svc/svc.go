@@ -21,7 +21,7 @@ func RunExecutorWs() {
 	}
 	config, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
-		slog.Error("loading deploymentconfig: " + err.Error())
+		slog.Error("loading chain config: " + err.Error())
 		return
 	}
 	wsAddr := viper.GetString(env.WS_ADDR)
@@ -39,7 +39,7 @@ func RunBroker() {
 	}
 	config, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
-		slog.Error("loading deploymentconfig: " + err.Error())
+		slog.Error("loading chain config: " + err.Error())
 		return
 	}
 	pk := viper.GetString(env.BROKER_KEY)
@@ -57,16 +57,18 @@ func RunBroker() {
 		BrokerFeeTbps: fee,
 	}
 
-	app.StartApiServer(viper.GetString(env.REDIS_ADDR),
+	err = app.StartApiServer(viper.GetString(env.REDIS_ADDR),
 		viper.GetString(env.REDIS_PW))
-
+	if err != nil {
+		slog.Error("API server: " + err.Error())
+	}
 }
 
 func loadEnv() error {
 
 	viper.SetConfigFile(".env")
 	if err := viper.ReadInConfig(); err != nil {
-		slog.Info("could not load .env file" + err.Error() + " using AutomaticEnv")
+		slog.Info("could not load .env file using AutomaticEnv")
 	}
 
 	viper.AutomaticEnv()
