@@ -3,6 +3,8 @@ services:
   broker:
     image: ghcr.io/d8-x/d8x-broker-server:dev
     restart: always
+    depends_on:
+      - redis
     ports:
       # Default svc port is 8000
       - 127.0.0.1:8000:8000
@@ -22,6 +24,8 @@ services:
   executorws:
     image: ghcr.io/d8-x/d8x-broker-exec-ws:dev
     restart: always
+    depends_on:
+      - redis
     ports:
       # Default svc port is 8080
       - 127.0.0.1:8080:8080
