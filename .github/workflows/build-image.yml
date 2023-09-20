@@ -16,8 +16,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - dockerfile: ./cmd/Dockerfile
+          - dockerfile: ./cmd/brokerapi/Dockerfile
             image: ghcr.io/d8-x/d8x-broker-server
+          - dockerfile: ./cmd/executorws/Dockerfile
+            image: ghcr.io/d8-x/d8x-broker-exec-ws
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
