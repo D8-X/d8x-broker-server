@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"log/slog"
+	"strings"
 
 	"github.com/D8-X/d8x-broker-server/src/api"
 	"github.com/D8-X/d8x-broker-server/src/config"
@@ -46,6 +47,7 @@ func RunBroker() {
 		return
 	}
 	pk := viper.GetString(env.BROKER_KEY)
+	pk = strings.TrimPrefix(pk, "0x")
 	pen, err := utils.NewSignaturePen(pk, config)
 	if err != nil {
 		log.Fatalf("unable to create signature pen: %v", err)
