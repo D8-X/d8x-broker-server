@@ -3,7 +3,6 @@ package utils
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -54,13 +53,13 @@ type APIOrderSig struct {
 	TraderAddr    string `json:"traderAddr"`    // broker sig
 	Deadline      uint32 `json:"iDeadline"`     // broker sig
 	// relevant for order digest
-	Flags              uint32   `json:"flags"`
-	FAmount            *big.Int `json:"fAmount"`
-	FLimitPrice        *big.Int `json:"fLimitPrice"`
-	FTriggerPrice      *big.Int `json:"fTriggerPrice"`
-	LeverageTDR        uint16   `json:"leverageTDR"`
-	BrokerSignature    []byte   `json:"brokerSignature"`
-	ExecutionTimestamp uint32   `json:"executionTimestamp"`
+	Flags              uint32 `json:"flags"`
+	FAmount            string `json:"fAmount"`
+	FLimitPrice        string `json:"fLimitPrice"`
+	FTriggerPrice      string `json:"fTriggerPrice"`
+	LeverageTDR        uint16 `json:"leverageTDR"`
+	BrokerSignature    []byte `json:"brokerSignature"`
+	ExecutionTimestamp uint32 `json:"executionTimestamp"`
 }
 
 // Message from executor websocket on signing an order
@@ -103,9 +102,9 @@ func (r *RueidisClient) PubOrder(order APIOrderSig, orderId string, chainId int6
 		FieldValue("PerpetualId", perpetualIdStr).
 		FieldValue("Deadline", strconv.Itoa(int(order.Deadline))).
 		FieldValue("Flags", strconv.Itoa(int(order.Flags))).
-		FieldValue("FAmount", order.FAmount.String()).
-		FieldValue("FLimitPrice", order.FLimitPrice.String()).
-		FieldValue("FTriggerPrice", order.FTriggerPrice.String()).
+		FieldValue("FAmount", order.FAmount).
+		FieldValue("FLimitPrice", order.FLimitPrice).
+		FieldValue("FTriggerPrice", order.FTriggerPrice).
 		FieldValue("ExecutionTimestamp", strconv.Itoa(int(order.ExecutionTimestamp))).Build()).Error()
 	if err != nil {
 		return err

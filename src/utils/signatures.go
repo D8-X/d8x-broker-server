@@ -113,16 +113,24 @@ func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (stri
 	perpId := new(big.Int).SetInt64(int64(order.PerpetualId))
 
 	var co d8x_futures.IClientOrderClientOrder
+	limitPrice, triggerPrice, amount := new(big.Int), new(big.Int), new(big.Int)
+	_, s1 := limitPrice.SetString(order.FLimitPrice, 10)
+	_, s2 := triggerPrice.SetString(order.FTriggerPrice, 10)
+	_, s3 := amount.SetString(order.FAmount, 10)
+	if !s1 || !s2 || !s3 {
+		return "", "", errors.New("invalid big number")
+	}
+
 	co.BrokerAddr = common.HexToAddress(order.BrokerAddr)
 	co.IPerpetualId = perpId
-	co.FLimitPrice = order.FLimitPrice
+	co.FLimitPrice = limitPrice
 	co.LeverageTDR = order.LeverageTDR
 	co.ExecutionTimestamp = order.ExecutionTimestamp
 	co.Flags = order.Flags
 	co.IDeadline = order.Deadline
 	co.BrokerAddr = common.HexToAddress(order.BrokerAddr)
-	co.FTriggerPrice = order.FTriggerPrice
-	co.FAmount = order.FAmount
+	co.FTriggerPrice = triggerPrice
+	co.FAmount = amount
 	co.TraderAddr = common.HexToAddress(order.TraderAddr)
 	co.BrokerFeeTbps = order.BrokerFeeTbps
 	co.BrokerSignature = order.BrokerSignature
