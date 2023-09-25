@@ -20,7 +20,7 @@ func (a *App) RegisterRoutes(router chi.Router) {
 
 	// Endpoint: /sign-order
 	router.Post("/sign-order", func(w http.ResponseWriter, r *http.Request) {
-		SignOrder(w, r, a.Pen, a.BrokerFeeTbps) // Pass `a.Pen` and fee here
+		SignOrder(w, r, a.Pen, a.BrokerFeeTbps, a.RedisClient) // Pass `a.Pen` and fee here
 	})
 
 	// Endpoint: /payment-signature

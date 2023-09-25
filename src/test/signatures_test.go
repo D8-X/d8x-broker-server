@@ -28,7 +28,7 @@ func TestSignOrder(t *testing.T) {
 	// Derive the Ethereum address from the private key
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	config, err := config.LoadChainConfig("../../config/shared.chainConfig.json")
+	config, err := config.LoadChainConfig("../../config/chainConfig.json")
 	if err != nil {
 		t.Errorf("loading deploymentconfig: %v", err)
 		return

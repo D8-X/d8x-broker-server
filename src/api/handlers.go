@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -61,12 +62,12 @@ func GetBrokerFee(w http.ResponseWriter, r *http.Request, fee uint16) {
 // SignOrder signs an order with the broker key and sets the fee
 // Additional to the order, the broker needs to know the
 // chainId
-func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, feeTbps uint16) {
+func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, feeTbps uint16, redis *utils.RueidisClient) {
 	// Read the JSON data from the request body
 	var jsonData []byte
 	if r.Body != nil {
 		defer r.Body.Close()
-		jsonData, _ = ioutil.ReadAll(r.Body)
+		jsonData, _ = io.ReadAll(r.Body)
 	}
 
 	// Parse the JSON payload
@@ -87,7 +88,7 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 		return
 	}
 	req.Order.BrokerFeeTbps = feeTbps
-	jsonResponse, err := pen.GetBrokerOrderSignatureResponse(req.Order, int64(req.ChainId))
+	jsonResponse, err := pen.GetBrokerOrderSignatureResponse(req.Order, int64(req.ChainId), redis)
 	if err != nil {
 		response := string(formatError(err.Error()))
 		fmt.Fprintf(w, response)

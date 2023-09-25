@@ -1,23 +1,12 @@
 # d8x-broker-server
 
-server to be used as remote broker by trader back-end
+- Server to be used as remote broker by trader back-end
+- Also contains a websocket for executors to be informed about
+ new orders
 
 ## Run
-Copy configuration and edit allowedExecutors (addresses which are permissioned to execute payments):
-`cp config/example.chainConfig.json config/live.chainConfig.json` and
-`nano config/live.chainConfig.json` to edit.
-Build with `go build cmd/main.go`
-
-You can then build and run the Docker image:
-```
-$ docker build -t broker-server . -f cmd/Dockerfile
-$ docker run -p 8000:8000 broker-server
-```
-note: as long as the repo is private, use:
-```
-$ docker build -t broker-server . -f cmd/Dockerfile --build-arg GITHUB_USER=<youruser> --build-arg GITHUB_TOKEN=<yourtoken>
-$ docker run -p 8000:8000 broker-server
-```
+The recommended setup is together with the entire backend:
+[D8-X/d8x-cli/](https://github.com/D8-X/d8x-cli/)
 
 # Endpoints
 
@@ -84,3 +73,59 @@ this is the error.
 
 Executors are permissioned in `live.chainConfig.json`
 
+# Websocket for executors
+Subscribe to order signature requests for a perpetual and chain separated
+by colon (:), for example
+
+```
+{
+    "type": "subscribe",
+    "topic": "100002:1442"
+}
+```
+The server will respond with an acknowledgement if the subscription seems ok (no check on perpetual id existence):
+```
+{
+    "type": "subscribe",
+    "topic": "100002:1442",
+    "data": "ack"
+}
+```
+Errors are returned in the following form:
+```
+{
+ "type":"subscribe",
+ "topic":"1002:1442",
+ "data": {
+    "error": "usage: perpetualId:chainId"
+    }
+}
+```
+Updates are returned of the following form:
+```
+{
+ "type":"update",
+ "topic":"100002:1442",
+ "data":{
+    "orderId":"476beb30452f678e262800c22392e2a416dbba6d942c3d7ed884388a8db3d7b3",
+    "iDeadline":1688347462,
+    "flags":20,
+    "fAmount":"1210000000",
+    "fLimitPrice":"2210000000",
+    "fTriggerPrice":"4210000000",
+    "executionTimestamp":1695128060
+    }
+}
+```
+The order-id is a hexadecimal number (returned as string) without the "0x"-prefix.
+
+# REDIS
+
+Upon signature of a new order, there is a Redis pub message `CHANNEL_NEW_ORDER` ("new-order")
+with message "perpetualId:chainId".
+Order data is stored in Redis with the key equal to the order-id. The data is set
+to expire after 60 seconds. The order-id is
+added to the Redis stack. Upon receipt of the Redis pub message, the 
+websocket-application loops through the stack of order-id's for the given perpetual
+and chain-id. If the order-id still has associated data (not older than 60s), the
+data is sent to all subscribers.
