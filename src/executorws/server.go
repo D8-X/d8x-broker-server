@@ -206,6 +206,7 @@ func (s *Server) handleOrderId(oId string, topic string) {
 	ve, _ := strconv.Atoi(orderStr["ExecutionTimestamp"])
 	var o = utils.WSOrderResp{
 		OrderId:            oId,
+		TraderAddr:         orderStr["TraderAddr"],
 		Deadline:           uint32(vd),
 		Flags:              uint32(vf),
 		FAmount:            orderStr["FAmount"],
