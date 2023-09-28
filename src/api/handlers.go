@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -105,7 +104,7 @@ func SignPayment(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen)
 	var jsonData []byte
 	if r.Body != nil {
 		defer r.Body.Close()
-		jsonData, _ = ioutil.ReadAll(r.Body)
+		jsonData, _ = io.ReadAll(r.Body)
 	}
 
 	// Parse the JSON payload
