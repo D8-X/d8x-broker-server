@@ -101,13 +101,14 @@ Errors are returned in the following form:
     }
 }
 ```
-Updates are returned of the following form:
+Updates are returned in the following form:
 ```
 {
  "type":"update",
  "topic":"100002:1442",
  "data":{
     "orderId":"476beb30452f678e262800c22392e2a416dbba6d942c3d7ed884388a8db3d7b3",
+    "traderAddr":"0x9d5aaB428e98678d0E645ea4AeBd25f744341a05",
     "iDeadline":1688347462,
     "flags":20,
     "fAmount":"1210000000",
@@ -129,3 +130,10 @@ added to the Redis stack. Upon receipt of the Redis pub message, the
 websocket-application loops through the stack of order-id's for the given perpetual
 and chain-id. If the order-id still has associated data (not older than 60s), the
 data is sent to all subscribers.
+
+# Debug/Test
+
+- Run redis `docker run -d --name redis-stack -p 6379:6379 -e REDIS_ARGS="--requirepass mypassword" redis/redis-stack-server:latest`
+- change .env so that the non-docker lines are enabled (API_BIND_ADDR = 127.0.0.1, localhost instead of service names), and `source .env`
+- go run cmd/brokerapi/main.go
+- go run cmd/executorws/main.go

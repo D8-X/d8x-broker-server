@@ -65,6 +65,7 @@ type APIOrderSig struct {
 // Message from executor websocket on signing an order
 type WSOrderResp struct {
 	OrderId            string `json:"orderId"`
+	TraderAddr         string `json:"traderAddr"`
 	Deadline           uint32 `json:"iDeadline"`
 	Flags              uint32 `json:"flags"`
 	FAmount            string `json:"fAmount"`
@@ -100,6 +101,7 @@ func (r *RueidisClient) PubOrder(order APIOrderSig, orderId string, chainId int6
 	chainIdStr := strconv.Itoa(int(chainId))
 	err := (*r.Client).Do(r.Ctx, (*r.Client).B().Hset().Key(orderId).FieldValue().
 		FieldValue("PerpetualId", perpetualIdStr).
+		FieldValue("TraderAddr", order.TraderAddr).
 		FieldValue("Deadline", strconv.Itoa(int(order.Deadline))).
 		FieldValue("Flags", strconv.Itoa(int(order.Flags))).
 		FieldValue("FAmount", order.FAmount).
