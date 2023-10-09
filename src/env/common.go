@@ -16,4 +16,6 @@ const (
 	WS_ADDR    = "WS_ADDR"
 	// chainConfig.json configuration file path
 	CONFIG_PATH = "CONFIG_PATH"
+	// file with private key
+	KEYFILE_PATH = "KEYFILE_PATH"
 )

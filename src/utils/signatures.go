@@ -1,10 +1,14 @@
 package utils
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 
 	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
@@ -181,4 +185,54 @@ func createWalletMap(configList []ChainConfig, privateKeyHex string) (map[int64]
 		walletMap[c.ChainId] = wallet
 	}
 	return walletMap, nil
+}
+
+func Encrypt(plainText string, key []byte) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	encrypted := gcm.Seal(nonce, nonce, []byte(plainText), nil)
+	return hex.EncodeToString(encrypted), nil
+}
+
+func Decrypt(encryptedText string, key []byte) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	encrypted, err := hex.DecodeString(encryptedText)
+	if err != nil {
+		return "", err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(encrypted) < nonceSize {
+		return "", fmt.Errorf("ciphertext too short")
+	}
+
+	nonce, encrypted := encrypted[:nonceSize], encrypted[nonceSize:]
+	plainText, err := gcm.Open(nil, nonce, encrypted, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plainText), nil
 }
