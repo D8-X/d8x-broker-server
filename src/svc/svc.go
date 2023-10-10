@@ -47,12 +47,15 @@ func RunBroker() {
 		slog.Error("loading env: " + err.Error())
 		return
 	}
+
+	fmt.Println("Loading config file from " + viper.GetString(env.CONFIG_PATH))
 	config, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
 		slog.Error("loading chain config: " + err.Error())
 		return
 	}
-	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH), abc)
+	fmt.Println("loading PK from " + viper.GetString(env.KEYFILE_PATH))
+	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH)+"/keyfile.txt", abc)
 	pen, err := utils.NewSignaturePen(pk, config)
 	if err != nil {
 		log.Fatalf("unable to create signature pen: %v", err)
