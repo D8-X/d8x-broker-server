@@ -73,7 +73,7 @@ networks:
 
 configs:
   chain_config:
-    file: ./config/chainConfig.json
+    file: ./chainConfig.json
 
 volumes:
   mydata:
