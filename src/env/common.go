@@ -6,8 +6,7 @@ const (
 	API_PORT = "API_PORT"
 	// Address on which REST API will bind. Defaults to "",
 	API_BIND_ADDR = "API_BIND_ADDR"
-	// Broker key
-	BROKER_KEY = "BROKER_KEY"
+
 	// Broker fee in tenth of bps
 	BROKER_FEE_TBPS = "BROKER_FEE_TBPS"
 	// REDIS connection string
@@ -16,4 +15,8 @@ const (
 	WS_ADDR    = "WS_ADDR"
 	// chainConfig.json configuration file path
 	CONFIG_PATH = "CONFIG_PATH"
+	// file with private key
+	KEYFILE_PATH = "KEYFILE_PATH"
+	// Broker key
+	BROKER_KEY = "BROKER_KEY"
 )

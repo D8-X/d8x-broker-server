@@ -1,7 +1,10 @@
 version: '3'
 services:
   broker:
-    image: ghcr.io/d8-x/d8x-broker-server:dev
+    #image: ghcr.io/d8-x/d8x-broker-server:dev
+    build:
+      context: .
+      dockerfile: ./cmd/brokerapi/Dockerfile
     restart: always
     depends_on:
       - redis
@@ -23,7 +26,10 @@ services:
       - chain_config
 
   executorws:
-    image: ghcr.io/d8-x/d8x-broker-exec-ws:dev
+    #image: ghcr.io/d8-x/d8x-broker-exec-ws:dev
+    build:
+      context: .
+      dockerfile: ./cmd/executorws/Dockerfile
     restart: always
     depends_on:
       - redis
