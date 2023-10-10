@@ -54,7 +54,7 @@ func RunBroker() {
 		slog.Error("loading chain config: " + err.Error())
 		return
 	}
-	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH)+"/keyfile.txt", abc)
+	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH)+"keyfile.txt", abc)
 	pen, err := utils.NewSignaturePen(pk, config)
 	if err != nil {
 		log.Fatalf("unable to create signature pen: %v", err)
