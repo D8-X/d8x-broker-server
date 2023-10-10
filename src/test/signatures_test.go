@@ -174,7 +174,6 @@ func loadEnv() {
 	viper.SetDefault(env.API_PORT, "8000")
 
 	requiredEnvs := []string{
-		env.BROKER_KEY,
 		env.BROKER_FEE_TBPS,
 	}
 

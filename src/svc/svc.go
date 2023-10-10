@@ -54,7 +54,6 @@ func RunBroker() {
 		slog.Error("loading chain config: " + err.Error())
 		return
 	}
-	fmt.Println("loading PK from " + viper.GetString(env.KEYFILE_PATH))
 	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH)+"/keyfile.txt", abc)
 	pen, err := utils.NewSignaturePen(pk, config)
 	if err != nil {
@@ -89,7 +88,6 @@ func loadEnv() error {
 	viper.SetDefault(env.API_PORT, "8000")
 
 	requiredEnvs := []string{
-		env.BROKER_KEY,
 		env.BROKER_FEE_TBPS,
 		env.CONFIG_PATH,
 		env.REDIS_ADDR,
