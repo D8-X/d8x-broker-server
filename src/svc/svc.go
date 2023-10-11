@@ -103,7 +103,7 @@ func loadEnv(requiredEnvs []string) error {
 	viper.AutomaticEnv()
 
 	viper.SetDefault(env.API_BIND_ADDR, "")
-	viper.SetDefault(env.API_PORT, "8000")
+	viper.SetDefault(env.API_PORT, "8001")
 
 	for _, e := range requiredEnvs {
 		if !viper.IsSet(e) {
