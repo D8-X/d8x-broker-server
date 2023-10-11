@@ -11,6 +11,6 @@
     "name": "zkEVM Testnet",
     "perpetualManagerProxyAddr": "0xb56b81e40e1cDB77bb5Db6C0283e25C27DAE1Be6",
     "multiPayCtrctAddr": "0xfCBE2f332b1249cDE226DFFE8b2435162426AfE5",
-    "allowedExecutors": ["0x9d5aaB428e98678d0E645ea4AeBd25f744341a05"]
+    "allowedExecutors": ["0x9d5aaB428e98678d0E645ea4AeBd25f744341a05","0xdE13687D5E283602f07e1C44a2268ca13C078dFe"]
   }
 ]
