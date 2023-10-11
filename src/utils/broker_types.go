@@ -17,6 +17,11 @@ type ChainConfig struct {
 	AllowedExecutors          []common.Address `json:"allowedExecutors"`
 }
 
+type RpcConfig struct {
+	ChainId int64    `json:"chainId"`
+	Rpc     []string `json:"rpc"`
+}
+
 type APIBrokerOrderSignatureReq struct {
 	Order     APIOrderSig `json:"order"`
 	ChainId   int64       `json:"chainId"`

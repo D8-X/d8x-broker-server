@@ -1,0 +1,10 @@
+[
+    {
+        "chainId": 80001,
+        "rpc": ["https://rpc-mumbai.maticvigil.com"]
+    },
+    {
+        "chainId": 1442,
+        "rpc": ["https://rpc.public.zkevm-test.net"]
+    }
+]

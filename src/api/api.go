@@ -51,3 +51,11 @@ func (a *App) StartApiServer(REDIS_ADDR string, REDIS_PW string) error {
 	)
 	return errors.New("api server is shutting down" + err.Error())
 }
+
+func (a *App) ApproveToken() {
+	/*
+		for k, c := range a.Pen.Config {
+			addr := c.MultiPayCtrctAddr
+			tknInstance, err := erc20.NewErc20(addr, a.Pen)
+		}*/
+}
