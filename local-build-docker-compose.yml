@@ -17,6 +17,7 @@ services:
       REDIS_ADDR: "${REDIS_ADDR}"
       REDIS_PW: "${REDIS_PW}"
       CONFIG_PATH: /chain_config
+      CONFIG_RPC_PATH: /rpc_config
       KEYFILE_PATH: /keyfile/
     logging:
       options:
@@ -24,6 +25,7 @@ services:
         max-file: "10"
     configs:
       - chain_config
+      - rpc_config
     volumes:
       - mydata:/keyfile
 
@@ -74,6 +76,8 @@ networks:
 configs:
   chain_config:
     file: ./config/chainConfig.json
+  rpc_config:
+    file: ./config/rpc.json
 
 volumes:
   mydata:
