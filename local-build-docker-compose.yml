@@ -17,13 +17,15 @@ services:
       REDIS_ADDR: "${REDIS_ADDR}"
       REDIS_PW: "${REDIS_PW}"
       CONFIG_PATH: /chain_config
-      KEYFILE_PATH: /mydata/key_config/
+      KEYFILE_PATH: /keyfile/
     logging:
       options:
         max-size: "10m"
         max-file: "10"
     configs:
       - chain_config
+    volumes:
+      - mydata:/keyfile
 
   executorws:
     #image: ghcr.io/d8-x/d8x-broker-exec-ws:dev
@@ -50,8 +52,6 @@ services:
         max-file: "10"
     configs:
       - chain_config
-    volumes:
-      - mydata:/mydata
 
   redis:
     image: redis

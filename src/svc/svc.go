@@ -20,7 +20,12 @@ var embedFS embed.FS
 var abc []byte
 
 func RunExecutorWs() {
-	err := loadEnv()
+	requiredEnvs := []string{
+		env.CONFIG_PATH,
+		env.REDIS_ADDR,
+		env.REDIS_PW,
+	}
+	err := loadEnv(requiredEnvs)
 	if err != nil {
 		slog.Error("loading env: " + err.Error())
 		return
@@ -40,8 +45,14 @@ func RunExecutorWs() {
 }
 
 func RunBroker() {
-
-	err := loadEnv()
+	requiredEnvs := []string{
+		env.BROKER_FEE_TBPS,
+		env.CONFIG_PATH,
+		env.REDIS_ADDR,
+		env.REDIS_PW,
+		env.KEYFILE_PATH,
+	}
+	err := loadEnv(requiredEnvs)
 	fmt.Print(abc)
 	if err != nil {
 		slog.Error("loading env: " + err.Error())
@@ -54,7 +65,7 @@ func RunBroker() {
 		slog.Error("loading chain config: " + err.Error())
 		return
 	}
-	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH)+"/keyfile.txt", abc)
+	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH)+"keyfile.txt", abc)
 	pen, err := utils.NewSignaturePen(pk, config)
 	if err != nil {
 		log.Fatalf("unable to create signature pen: %v", err)
@@ -75,7 +86,7 @@ func RunBroker() {
 	}
 }
 
-func loadEnv() error {
+func loadEnv(requiredEnvs []string) error {
 
 	viper.SetConfigFile(".env")
 	if err := viper.ReadInConfig(); err != nil {
@@ -86,14 +97,6 @@ func loadEnv() error {
 
 	viper.SetDefault(env.API_BIND_ADDR, "")
 	viper.SetDefault(env.API_PORT, "8000")
-
-	requiredEnvs := []string{
-		env.BROKER_FEE_TBPS,
-		env.CONFIG_PATH,
-		env.REDIS_ADDR,
-		env.REDIS_PW,
-		env.KEYFILE_PATH,
-	}
 
 	for _, e := range requiredEnvs {
 		if !viper.IsSet(e) {
