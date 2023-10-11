@@ -19,18 +19,20 @@ import (
 // SignaturePen stores the chainId <-> deployment address mappings,
 // and the wallet struct for the broker
 type SignaturePen struct {
-	Config  map[int64]ChainConfig
-	Wallets map[int64]d8x_futures.Wallet
+	ChainConfig map[int64]ChainConfig
+	RpcConfig   map[int64][]string
+	Wallets     map[int64]d8x_futures.Wallet
 }
 
-func NewSignaturePen(privateKeyHex string, config []ChainConfig) (SignaturePen, error) {
-	wallets, err := createWalletMap(config, privateKeyHex)
+func NewSignaturePen(privateKeyHex string, chConf []ChainConfig, rpcConf []RpcConfig) (SignaturePen, error) {
+	wallets, err := createWalletMap(chConf, privateKeyHex)
 	if err != nil {
 		return SignaturePen{}, err
 	}
 	pen := SignaturePen{
-		Config:  createConfigMap(config),
-		Wallets: wallets,
+		ChainConfig: createChainConfigMap(chConf),
+		RpcConfig:   createRpcConfigMap(rpcConf),
+		Wallets:     wallets,
 	}
 	return pen, nil
 }
@@ -40,7 +42,7 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 	if err != nil {
 		return common.Address{}, err
 	}
-	ctrct := p.Config[ps.Payment.ChainId].MultiPayCtrctAddr
+	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
 	if ctrct != ps.Payment.MultiPayCtrct {
 		return common.Address{}, fmt.Errorf("Multipay ctrct mismatch")
 	}
@@ -52,7 +54,7 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 }
 
 func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPaySignatureReq) ([]byte, error) {
-	ctrct := p.Config[ps.Payment.ChainId].MultiPayCtrctAddr
+	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
 	if ctrct != ps.Payment.MultiPayCtrct {
 		return nil, fmt.Errorf("Multipay ctrct mismatch")
 	}
@@ -138,7 +140,7 @@ func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (stri
 	co.TraderAddr = common.HexToAddress(order.TraderAddr)
 	co.BrokerFeeTbps = order.BrokerFeeTbps
 	co.BrokerSignature = order.BrokerSignature
-	d, err := d8x_futures.CreateOrderDigest(co, int(chainId), true, p.Config[chainId].PerpetualManagerProxyAddr.String())
+	d, err := d8x_futures.CreateOrderDigest(co, int(chainId), true, p.ChainConfig[chainId].PerpetualManagerProxyAddr.String())
 	if err != nil {
 		return "", "", err
 	}
@@ -153,7 +155,7 @@ func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (stri
 
 func (p *SignaturePen) SignOrder(order d8x_futures.IPerpetualOrderOrder, chainId int64) (string, string, error) {
 	//
-	proxyAddr := p.Config[chainId].PerpetualManagerProxyAddr
+	proxyAddr := p.ChainConfig[chainId].PerpetualManagerProxyAddr
 	wallet := p.Wallets[chainId]
 	if wallet.PrivateKey == nil {
 		return "", "", fmt.Errorf("No broker key defined for chain %d", chainId)
@@ -166,10 +168,18 @@ func (p *SignaturePen) SignOrder(order d8x_futures.IPerpetualOrderOrder, chainId
 	return digest, sig, err
 }
 
-func createConfigMap(configList []ChainConfig) map[int64]ChainConfig {
+func createChainConfigMap(configList []ChainConfig) map[int64]ChainConfig {
 	config := make(map[int64]ChainConfig)
 	for _, c := range configList {
 		config[c.ChainId] = c
+	}
+	return config
+}
+
+func createRpcConfigMap(configList []RpcConfig) map[int64][]string {
+	config := make(map[int64][]string)
+	for _, c := range configList {
+		config[c.ChainId] = c.Rpc
 	}
 	return config
 }

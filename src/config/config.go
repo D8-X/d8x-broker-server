@@ -26,7 +26,7 @@ func LoadChainConfig(configName string) ([]utils.ChainConfig, error) {
 	return configuration, nil
 }
 
-// load configuration json with deployment addresses: "config/chainConfig.json"
+// load configuration json with deployment addresses: "config/rpcConfig.json"
 func LoadRpcConfig(configName string) ([]utils.RpcConfig, error) {
 	// Read the JSON file
 	data, err := os.ReadFile(configName)

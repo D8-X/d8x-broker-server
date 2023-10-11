@@ -25,6 +25,6 @@ func (a *App) RegisterRoutes(router chi.Router) {
 
 	// Endpoint: /payment-signature
 	router.Post("/sign-payment", func(w http.ResponseWriter, r *http.Request) {
-		SignPayment(w, r, a.Pen) // Pass `a.Pen` and fee here
+		SignPayment(w, r, a) // Pass `a.Pen` and fee here
 	})
 }

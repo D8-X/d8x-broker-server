@@ -19,7 +19,7 @@ type ChainConfig struct {
 
 type RpcConfig struct {
 	ChainId int64    `json:"chainId"`
-	Rpc     []string `json:"rpc"`
+	Rpc     []string `json:"HTTP"`
 }
 
 type APIBrokerOrderSignatureReq struct {
