@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"strings"
 
 	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
@@ -55,8 +56,8 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 
 func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPaySignatureReq) ([]byte, error) {
 	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
-	if ctrct != ps.Payment.MultiPayCtrct {
-		return nil, fmt.Errorf("Multipay ctrct mismatch")
+	if strings.ToLower(ctrct.String()) != strings.ToLower(ps.Payment.MultiPayCtrct.String()) {
+		return nil, fmt.Errorf("Multipay ctrct mismatch, expect " + ctrct.String())
 	}
 	_, sig, err := d8x_futures.CreatePaymentBrokerSignature(ps.Payment, p.Wallets[ps.Payment.ChainId])
 	if err != nil {
