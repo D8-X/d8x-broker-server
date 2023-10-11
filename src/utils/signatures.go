@@ -9,7 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"math/big"
+	"strconv"
 	"strings"
 
 	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
@@ -42,6 +44,10 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 	sig, err := d8x_futures.BytesFromHexString(ps.ExecutorSignature)
 	if err != nil {
 		return common.Address{}, err
+	}
+	c := p.ChainConfig[ps.Payment.ChainId]
+	if c.MultiPayCtrctAddr == (common.Address{}) {
+		return common.Address{}, fmt.Errorf("Multipay ctrct not found for chain: " + strconv.Itoa(int(ps.Payment.ChainId)))
 	}
 	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
 	if strings.ToLower(ctrct.String()) != strings.ToLower(ps.Payment.MultiPayCtrct.String()) {
@@ -172,6 +178,7 @@ func (p *SignaturePen) SignOrder(order d8x_futures.IPerpetualOrderOrder, chainId
 func createChainConfigMap(configList []ChainConfig) map[int64]ChainConfig {
 	config := make(map[int64]ChainConfig)
 	for _, c := range configList {
+		slog.Info("Chain config for chain " + strconv.Itoa(int(c.ChainId)))
 		config[c.ChainId] = c
 	}
 	return config
