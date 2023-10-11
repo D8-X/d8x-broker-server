@@ -54,7 +54,6 @@ func RunBroker() {
 		env.CONFIG_RPC_PATH,
 	}
 	err := loadEnv(requiredEnvs)
-	fmt.Print(abc)
 	if err != nil {
 		slog.Error("loading env: " + err.Error())
 		return
@@ -66,6 +65,7 @@ func RunBroker() {
 		slog.Error("loading chain config: " + err.Error())
 		return
 	}
+	fmt.Println("Loading rpc config file from " + viper.GetString(env.CONFIG_RPC_PATH))
 	rpcConf, err := config.LoadRpcConfig(viper.GetString(env.CONFIG_RPC_PATH))
 	if err != nil {
 		slog.Error("loading rpc config: " + err.Error())
