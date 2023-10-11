@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 
+	"log/slog"
+
 	"github.com/D8-X/d8x-broker-server/src/utils"
 	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
@@ -99,7 +101,8 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 	w.Write(jsonResponse)
 }
 
-func SignPayment(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen) {
+func SignPayment(w http.ResponseWriter, r *http.Request, a *App) {
+	pen := a.Pen
 	// Read the JSON data from the request body
 	var jsonData []byte
 	if r.Body != nil {
@@ -146,7 +149,15 @@ func SignPayment(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen)
 		fmt.Fprintf(w, response)
 		return
 	}
-	// allowed executor, we can sign
+	// ensure token is approved to be spent
+	err = a.ApproveToken(req.Payment.ChainId, req.Payment.Token)
+	if err != nil {
+		slog.Error(err.Error())
+		response := string(formatError("Error approving token spending"))
+		fmt.Fprintf(w, response)
+		return
+	}
+	// allowed executor, token approved, we can sign
 	jsonResponse, err := pen.GetBrokerPaymentSignatureResponse(req)
 	if err != nil {
 		response := string(formatError(err.Error()))
@@ -161,7 +172,7 @@ func SignPayment(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen)
 }
 
 func findExecutor(pen utils.SignaturePen, chainId int64, executor common.Address) bool {
-	config := pen.Config[chainId]
+	config := pen.ChainConfig[chainId]
 	for _, addr := range config.AllowedExecutors {
 		if addr == executor {
 			return true

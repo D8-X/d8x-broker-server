@@ -51,6 +51,7 @@ func RunBroker() {
 		env.REDIS_ADDR,
 		env.REDIS_PW,
 		env.KEYFILE_PATH,
+		env.CONFIG_RPC_PATH,
 	}
 	err := loadEnv(requiredEnvs)
 	fmt.Print(abc)
@@ -60,13 +61,18 @@ func RunBroker() {
 	}
 
 	fmt.Println("Loading config file from " + viper.GetString(env.CONFIG_PATH))
-	config, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
+	chConf, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
 		slog.Error("loading chain config: " + err.Error())
 		return
 	}
+	rpcConf, err := config.LoadRpcConfig(viper.GetString(env.CONFIG_RPC_PATH))
+	if err != nil {
+		slog.Error("loading rpc config: " + err.Error())
+		return
+	}
 	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH)+"keyfile.txt", abc)
-	pen, err := utils.NewSignaturePen(pk, config)
+	pen, err := utils.NewSignaturePen(pk, chConf, rpcConf)
 	if err != nil {
 		log.Fatalf("unable to create signature pen: %v", err)
 	}
@@ -74,10 +80,11 @@ func RunBroker() {
 	slog.Info("starting REST API server")
 	// Start the rest api
 	app := &api.App{
-		Port:          viper.GetString(env.API_PORT),
-		BindAddr:      viper.GetString(env.API_BIND_ADDR),
-		Pen:           pen,
-		BrokerFeeTbps: fee,
+		Port:           viper.GetString(env.API_PORT),
+		BindAddr:       viper.GetString(env.API_BIND_ADDR),
+		Pen:            pen,
+		BrokerFeeTbps:  fee,
+		ApprovedTokens: make(map[string]bool),
 	}
 	err = app.StartApiServer(viper.GetString(env.REDIS_ADDR),
 		viper.GetString(env.REDIS_PW))
