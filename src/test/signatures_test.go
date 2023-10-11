@@ -28,13 +28,18 @@ func TestSignOrder(t *testing.T) {
 	// Derive the Ethereum address from the private key
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	config, err := config.LoadChainConfig("../../config/chainConfig.json")
+	chConfig, err := config.LoadChainConfig("../../config/chainConfig.json")
+	if err != nil {
+		t.Errorf("loading deploymentconfig: %v", err)
+		return
+	}
+	rpcConfig, err := config.LoadRpcConfig("../../config/rpc.json")
 	if err != nil {
 		t.Errorf("loading deploymentconfig: %v", err)
 		return
 	}
 	pk := fmt.Sprintf("%x", privateKey.D)
-	pen, err := utils.NewSignaturePen(pk, config)
+	pen, err := utils.NewSignaturePen(pk, chConfig, rpcConfig)
 	var perpOrder = d8x_futures.IPerpetualOrderOrder{
 		BrokerFeeTbps: 410,
 		TraderAddr:    common.HexToAddress("0x9d5aaB428e98678d0E645ea4AeBd25f744341a05"),
@@ -123,13 +128,18 @@ func TestSignPayment(t *testing.T) {
 		ExecutorSignature: sg,
 	}
 
-	config, err := config.LoadChainConfig("../../config/example.chainConfig.json")
+	chConfig, err := config.LoadChainConfig("../../config/example.chainConfig.json")
+	if err != nil {
+		t.Errorf("loading deploymentconfig: %v", err)
+		return
+	}
+	rpcConfig, err := config.LoadRpcConfig("../../config/rpc.json")
 	if err != nil {
 		t.Errorf("loading deploymentconfig: %v", err)
 		return
 	}
 	pkBrker := fmt.Sprintf("%x", brokerPk.D)
-	pen, err := utils.NewSignaturePen(pkBrker, config)
+	pen, err := utils.NewSignaturePen(pkBrker, chConfig, rpcConfig)
 	jsonRes, err := pen.GetBrokerPaymentSignatureResponse(data)
 	if err != nil {
 		t.Errorf("GetBrokerPaymentSignatureResponse: %v", err)
