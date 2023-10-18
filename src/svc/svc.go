@@ -104,7 +104,7 @@ func loadEnv(requiredEnvs []string) error {
 
 	viper.SetDefault(env.API_BIND_ADDR, "")
 	viper.SetDefault(env.API_PORT, "8001")
-
+	viper.SetDefault(env.WS_ADDR, "executorws:8080")
 	for _, e := range requiredEnvs {
 		if !viper.IsSet(e) {
 			return errors.New("required environment variable not set variable" + e)
