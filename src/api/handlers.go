@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"log/slog"
@@ -88,6 +89,7 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 		http.Error(w, string(formatError(err.Error())), http.StatusBadRequest)
 		return
 	}
+	slog.Info("Order signature request: trader " + string(req.Order.TraderAddr[1:4]) + "... Perpetual " + strconv.Itoa(int(req.Order.PerpetualId)))
 	req.Order.BrokerFeeTbps = feeTbps
 	jsonResponse, err := pen.GetBrokerOrderSignatureResponse(req.Order, int64(req.ChainId), redis)
 	if err != nil {
