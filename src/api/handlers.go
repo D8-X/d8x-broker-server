@@ -89,10 +89,11 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 		http.Error(w, string(formatError(err.Error())), http.StatusBadRequest)
 		return
 	}
-	slog.Info("Order signature request: trader " + string(req.Order.TraderAddr[1:4]) + "... Perpetual " + strconv.Itoa(int(req.Order.PerpetualId)))
+	slog.Info("Order signature request: trader " + string(req.Order.TraderAddr[0:8]) + "... Perpetual " + strconv.Itoa(int(req.Order.PerpetualId)))
 	req.Order.BrokerFeeTbps = feeTbps
 	jsonResponse, err := pen.GetBrokerOrderSignatureResponse(req.Order, int64(req.ChainId), redis)
 	if err != nil {
+		slog.Error("Error in signature request: " + err.Error())
 		response := string(formatError(err.Error()))
 		fmt.Fprintf(w, response)
 		return
@@ -116,6 +117,7 @@ func SignPayment(w http.ResponseWriter, r *http.Request, a *App) {
 	var req d8x_futures.BrokerPaySignatureReq
 	err := req.UnmarshalJSON([]byte(jsonData))
 	if err != nil {
+		slog.Error("Error in payment signature request: " + err.Error())
 		errMsg := `Wrong argument types. Usage: {
 			'payment': {
 				'payer': '0x4Fdc785fe2C6812960C93CA2F9D12b5Bd21ea2a1', 
