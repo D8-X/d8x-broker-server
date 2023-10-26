@@ -21,6 +21,8 @@
 go.work
 
 # ignore .env
+config/keyfile.txt
+src/svc/ranky.txt
 .env
 main
 __debug*

@@ -2,7 +2,6 @@ package executorws
 
 import (
 	"encoding/json"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -78,13 +77,14 @@ func (s *Server) RemoveClient(clientID string) {
 // Process incoming websocket message
 // https://github.com/madeindra/golang-websocket/
 func (s *Server) HandleRequest(conn *websocket.Conn, clientID string, message []byte) {
-	slog.Info("recv: " + fmt.Sprint(message))
+
 	var data ClientMessage
 	err := json.Unmarshal(message, &data)
 	if err != nil {
 		// JSON parsing not successful
 		return
 	}
+	slog.Info("recv: Topic " + data.Topic + " Type " + data.Type)
 	reqTopic := strings.TrimSpace(strings.ToLower(data.Topic))
 	reqType := strings.TrimSpace(strings.ToLower(data.Type))
 	if reqType == "subscribe" {
@@ -174,7 +174,7 @@ func errorResponse(reqType string, reqTopic string, msg string) []byte {
 
 // handle Redis message from CHANNEL_NEW_ORDER
 func (s *Server) handleNewOrder(msg rueidis.PubSubMessage) {
-	slog.Info("Received message:" + msg.Message)
+	slog.Info("Received CHANNEL_NEW_ORDER message:" + msg.Message)
 	topic := msg.Message
 	// get the order-id
 	client := *s.RedisClient.Client
@@ -223,8 +223,10 @@ func (s *Server) handleOrderId(oId string, topic string) {
 	// update subscribers
 	clients := server.Subscriptions[topic]
 	var wg sync.WaitGroup
-	for _, conn := range clients {
+	slog.Info("Sending update to " + strconv.Itoa(len(clients)) + " subscribers")
+	for k, conn := range clients {
 		wg.Add(1)
+		slog.Info("Sending update to client " + k)
 		go server.SendWithWait(conn, jsonData, &wg)
 	}
 	// wait until all goroutines jobs done

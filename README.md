@@ -137,3 +137,7 @@ data is sent to all subscribers.
 - change .env so that the non-docker lines are enabled (API_BIND_ADDR = 127.0.0.1, localhost instead of service names), and `source .env`
 - go run cmd/brokerapi/main.go
 - go run cmd/executorws/main.go
+
+## Dev: Contracts
+Generate the ABI:
+`abigen --abi src/contracts/abi/ERC20.json --pkg contracts --type Erc20 --out erc20.go`

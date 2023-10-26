@@ -1,10 +1,11 @@
 package svc
 
 import (
+	"embed"
 	"errors"
+	"fmt"
 	"log"
 	"log/slog"
-	"strings"
 
 	"github.com/D8-X/d8x-broker-server/src/api"
 	"github.com/D8-X/d8x-broker-server/src/config"
@@ -14,8 +15,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+//go:embed ranky.txt
+var embedFS embed.FS
+var abc []byte
+
 func RunExecutorWs() {
-	err := loadEnv()
+	requiredEnvs := []string{
+		env.CONFIG_PATH,
+		env.REDIS_ADDR,
+		env.REDIS_PW,
+	}
+	err := loadEnv(requiredEnvs)
 	if err != nil {
 		slog.Error("loading env: " + err.Error())
 		return
@@ -35,20 +45,34 @@ func RunExecutorWs() {
 }
 
 func RunBroker() {
-
-	err := loadEnv()
+	requiredEnvs := []string{
+		env.BROKER_FEE_TBPS,
+		env.CONFIG_PATH,
+		env.REDIS_ADDR,
+		env.REDIS_PW,
+		env.KEYFILE_PATH,
+		env.CONFIG_RPC_PATH,
+	}
+	err := loadEnv(requiredEnvs)
 	if err != nil {
 		slog.Error("loading env: " + err.Error())
 		return
 	}
-	config, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
+
+	fmt.Println("Loading config file from " + viper.GetString(env.CONFIG_PATH))
+	chConf, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
 		slog.Error("loading chain config: " + err.Error())
 		return
 	}
-	pk := viper.GetString(env.BROKER_KEY)
-	pk = strings.TrimPrefix(pk, "0x")
-	pen, err := utils.NewSignaturePen(pk, config)
+	fmt.Println("Loading rpc config file from " + viper.GetString(env.CONFIG_RPC_PATH))
+	rpcConf, err := config.LoadRpcConfig(viper.GetString(env.CONFIG_RPC_PATH))
+	if err != nil {
+		slog.Error("loading rpc config: " + err.Error())
+		return
+	}
+	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH)+"keyfile.txt", abc)
+	pen, err := utils.NewSignaturePen(pk, chConf, rpcConf)
 	if err != nil {
 		log.Fatalf("unable to create signature pen: %v", err)
 	}
@@ -56,12 +80,12 @@ func RunBroker() {
 	slog.Info("starting REST API server")
 	// Start the rest api
 	app := &api.App{
-		Port:          viper.GetString(env.API_PORT),
-		BindAddr:      viper.GetString(env.API_BIND_ADDR),
-		Pen:           pen,
-		BrokerFeeTbps: fee,
+		Port:           viper.GetString(env.API_PORT),
+		BindAddr:       viper.GetString(env.API_BIND_ADDR),
+		Pen:            pen,
+		BrokerFeeTbps:  fee,
+		ApprovedTokens: make(map[string]bool),
 	}
-
 	err = app.StartApiServer(viper.GetString(env.REDIS_ADDR),
 		viper.GetString(env.REDIS_PW))
 	if err != nil {
@@ -69,30 +93,31 @@ func RunBroker() {
 	}
 }
 
-func loadEnv() error {
+func loadEnv(requiredEnvs []string) error {
 
 	viper.SetConfigFile(".env")
 	if err := viper.ReadInConfig(); err != nil {
 		slog.Info("could not load .env file using AutomaticEnv")
 	}
-
+	loadAbc()
 	viper.AutomaticEnv()
 
 	viper.SetDefault(env.API_BIND_ADDR, "")
-	viper.SetDefault(env.API_PORT, "8000")
-
-	requiredEnvs := []string{
-		env.BROKER_KEY,
-		env.BROKER_FEE_TBPS,
-		env.CONFIG_PATH,
-		env.REDIS_ADDR,
-		env.REDIS_PW,
-	}
-
+	viper.SetDefault(env.API_PORT, "8001")
+	viper.SetDefault(env.WS_ADDR, "executorws:8080")
 	for _, e := range requiredEnvs {
 		if !viper.IsSet(e) {
 			return errors.New("required environment variable not set variable" + e)
 		}
 	}
 	return nil
+}
+
+func loadAbc() {
+	content, err := embedFS.ReadFile("ranky.txt")
+	if err != nil {
+		fmt.Println("Error reading embedded file:", err)
+		return
+	}
+	abc = content
 }

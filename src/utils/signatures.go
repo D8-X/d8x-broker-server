@@ -1,11 +1,18 @@
 package utils
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"math/big"
+	"strconv"
+	"strings"
 
 	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,18 +22,20 @@ import (
 // SignaturePen stores the chainId <-> deployment address mappings,
 // and the wallet struct for the broker
 type SignaturePen struct {
-	Config  map[int64]ChainConfig
-	Wallets map[int64]d8x_futures.Wallet
+	ChainConfig map[int64]ChainConfig
+	RpcConfig   map[int64][]string
+	Wallets     map[int64]d8x_futures.Wallet
 }
 
-func NewSignaturePen(privateKeyHex string, config []ChainConfig) (SignaturePen, error) {
-	wallets, err := createWalletMap(config, privateKeyHex)
+func NewSignaturePen(privateKeyHex string, chConf []ChainConfig, rpcConf []RpcConfig) (SignaturePen, error) {
+	wallets, err := createWalletMap(chConf, privateKeyHex)
 	if err != nil {
 		return SignaturePen{}, err
 	}
 	pen := SignaturePen{
-		Config:  createConfigMap(config),
-		Wallets: wallets,
+		ChainConfig: createChainConfigMap(chConf),
+		RpcConfig:   createRpcConfigMap(rpcConf),
+		Wallets:     wallets,
 	}
 	return pen, nil
 }
@@ -36,9 +45,13 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 	if err != nil {
 		return common.Address{}, err
 	}
-	ctrct := p.Config[ps.Payment.ChainId].MultiPayCtrctAddr
-	if ctrct != ps.Payment.MultiPayCtrct {
-		return common.Address{}, fmt.Errorf("Multipay ctrct mismatch")
+	c := p.ChainConfig[ps.Payment.ChainId]
+	if c.MultiPayCtrctAddr == (common.Address{}) {
+		return common.Address{}, fmt.Errorf("Multipay ctrct not found for chain: " + strconv.Itoa(int(ps.Payment.ChainId)))
+	}
+	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
+	if strings.ToLower(ctrct.String()) != strings.ToLower(ps.Payment.MultiPayCtrct.String()) {
+		return common.Address{}, fmt.Errorf("Multipay ctrct mismatch, expected: " + strings.ToLower(ctrct.String()))
 	}
 	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sig, ps.Payment)
 	if err != nil {
@@ -48,9 +61,9 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 }
 
 func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPaySignatureReq) ([]byte, error) {
-	ctrct := p.Config[ps.Payment.ChainId].MultiPayCtrctAddr
-	if ctrct != ps.Payment.MultiPayCtrct {
-		return nil, fmt.Errorf("Multipay ctrct mismatch")
+	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
+	if strings.ToLower(ctrct.String()) != strings.ToLower(ps.Payment.MultiPayCtrct.String()) {
+		return nil, fmt.Errorf("Multipay ctrct mismatch, expected: " + ctrct.String())
 	}
 	_, sig, err := d8x_futures.CreatePaymentBrokerSignature(ps.Payment, p.Wallets[ps.Payment.ChainId])
 	if err != nil {
@@ -134,7 +147,7 @@ func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (stri
 	co.TraderAddr = common.HexToAddress(order.TraderAddr)
 	co.BrokerFeeTbps = order.BrokerFeeTbps
 	co.BrokerSignature = order.BrokerSignature
-	d, err := d8x_futures.CreateOrderDigest(co, int(chainId), true, p.Config[chainId].PerpetualManagerProxyAddr.String())
+	d, err := d8x_futures.CreateOrderDigest(co, int(chainId), true, p.ChainConfig[chainId].PerpetualManagerProxyAddr.String())
 	if err != nil {
 		return "", "", err
 	}
@@ -149,7 +162,7 @@ func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (stri
 
 func (p *SignaturePen) SignOrder(order d8x_futures.IPerpetualOrderOrder, chainId int64) (string, string, error) {
 	//
-	proxyAddr := p.Config[chainId].PerpetualManagerProxyAddr
+	proxyAddr := p.ChainConfig[chainId].PerpetualManagerProxyAddr
 	wallet := p.Wallets[chainId]
 	if wallet.PrivateKey == nil {
 		return "", "", fmt.Errorf("No broker key defined for chain %d", chainId)
@@ -162,10 +175,19 @@ func (p *SignaturePen) SignOrder(order d8x_futures.IPerpetualOrderOrder, chainId
 	return digest, sig, err
 }
 
-func createConfigMap(configList []ChainConfig) map[int64]ChainConfig {
+func createChainConfigMap(configList []ChainConfig) map[int64]ChainConfig {
 	config := make(map[int64]ChainConfig)
 	for _, c := range configList {
+		slog.Info("Chain config for chain " + strconv.Itoa(int(c.ChainId)))
 		config[c.ChainId] = c
+	}
+	return config
+}
+
+func createRpcConfigMap(configList []RpcConfig) map[int64][]string {
+	config := make(map[int64][]string)
+	for _, c := range configList {
+		config[c.ChainId] = c.Rpc
 	}
 	return config
 }
@@ -181,4 +203,54 @@ func createWalletMap(configList []ChainConfig, privateKeyHex string) (map[int64]
 		walletMap[c.ChainId] = wallet
 	}
 	return walletMap, nil
+}
+
+func Encrypt(plainText string, key []byte) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	encrypted := gcm.Seal(nonce, nonce, []byte(plainText), nil)
+	return hex.EncodeToString(encrypted), nil
+}
+
+func Decrypt(encryptedText string, key []byte) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	encrypted, err := hex.DecodeString(encryptedText)
+	if err != nil {
+		return "", err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(encrypted) < nonceSize {
+		return "", fmt.Errorf("ciphertext too short")
+	}
+
+	nonce, encrypted := encrypted[:nonceSize], encrypted[nonceSize:]
+	plainText, err := gcm.Open(nil, nonce, encrypted, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plainText), nil
 }
