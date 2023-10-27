@@ -1,5 +1,4 @@
 # d8x-broker-server
-
 - Server to be used as remote broker by trader back-end
 - Also contains a websocket for executors to be informed about
  new orders
