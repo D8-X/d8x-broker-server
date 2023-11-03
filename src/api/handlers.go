@@ -11,7 +11,7 @@ import (
 	"log/slog"
 
 	"github.com/D8-X/d8x-broker-server/src/utils"
-	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
+	"github.com/D8-X/d8x-futures-go-sdk/pkg/d8x_futures"
 	"github.com/ethereum/go-ethereum/common"
 )
 

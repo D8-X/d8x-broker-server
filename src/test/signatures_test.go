@@ -11,7 +11,8 @@ import (
 	"github.com/D8-X/d8x-broker-server/src/config"
 	"github.com/D8-X/d8x-broker-server/src/env"
 	"github.com/D8-X/d8x-broker-server/src/utils"
-	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
+	"github.com/D8-X/d8x-futures-go-sdk/pkg/contracts"
+	"github.com/D8-X/d8x-futures-go-sdk/pkg/d8x_futures"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/viper"
@@ -40,7 +41,7 @@ func TestSignOrder(t *testing.T) {
 	}
 	pk := fmt.Sprintf("%x", privateKey.D)
 	pen, err := utils.NewSignaturePen(pk, chConfig, rpcConfig)
-	var perpOrder = d8x_futures.IPerpetualOrderOrder{
+	var perpOrder = contracts.IPerpetualOrderOrder{
 		BrokerFeeTbps: 410,
 		TraderAddr:    common.HexToAddress("0x9d5aaB428e98678d0E645ea4AeBd25f744341a05"),
 		BrokerAddr:    addr,

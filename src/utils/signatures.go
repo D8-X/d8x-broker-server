@@ -14,7 +14,8 @@ import (
 	"strconv"
 	"strings"
 
-	d8x_futures "github.com/D8-X/d8x-futures-go-sdk"
+	"github.com/D8-X/d8x-futures-go-sdk/pkg/contracts"
+	"github.com/D8-X/d8x-futures-go-sdk/pkg/d8x_futures"
 	"github.com/ethereum/go-ethereum/common"
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
@@ -83,7 +84,7 @@ func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPa
 }
 
 func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainId int64, redis *RueidisClient) ([]byte, error) {
-	var perpOrder = d8x_futures.IPerpetualOrderOrder{
+	var perpOrder = contracts.IPerpetualOrderOrder{
 		// data for broker signature
 		BrokerFeeTbps: order.BrokerFeeTbps,
 		TraderAddr:    common.HexToAddress(order.TraderAddr),
@@ -125,7 +126,7 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (string, string, error) {
 	perpId := new(big.Int).SetInt64(int64(order.PerpetualId))
 
-	var co d8x_futures.IClientOrderClientOrder
+	var co contracts.IClientOrderClientOrder
 	limitPrice, triggerPrice, amount := new(big.Int), new(big.Int), new(big.Int)
 	_, s1 := limitPrice.SetString(order.FLimitPrice, 10)
 	_, s2 := triggerPrice.SetString(order.FTriggerPrice, 10)
@@ -160,7 +161,7 @@ func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (stri
 	return d, orderId, nil
 }
 
-func (p *SignaturePen) SignOrder(order d8x_futures.IPerpetualOrderOrder, chainId int64) (string, string, error) {
+func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, chainId int64) (string, string, error) {
 	//
 	proxyAddr := p.ChainConfig[chainId].PerpetualManagerProxyAddr
 	wallet := p.Wallets[chainId]
