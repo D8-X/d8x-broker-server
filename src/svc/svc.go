@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"os"
 
 	"github.com/D8-X/d8x-broker-server/src/api"
 	"github.com/D8-X/d8x-broker-server/src/config"
@@ -14,6 +15,12 @@ import (
 	"github.com/D8-X/d8x-broker-server/src/utils"
 	"github.com/spf13/viper"
 )
+
+func init() {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	})))
+}
 
 //go:embed ranky.txt
 var embedFS embed.FS
@@ -53,6 +60,7 @@ func RunBroker() {
 		env.KEYFILE_PATH,
 		env.CONFIG_RPC_PATH,
 	}
+
 	err := loadEnv(requiredEnvs)
 	if err != nil {
 		slog.Error("loading env: " + err.Error())
