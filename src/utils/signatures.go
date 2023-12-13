@@ -54,7 +54,7 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 	if strings.ToLower(ctrct.String()) != strings.ToLower(ps.Payment.MultiPayCtrct.String()) {
 		return common.Address{}, fmt.Errorf("Multipay ctrct mismatch, expected: " + strings.ToLower(ctrct.String()))
 	}
-	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sig, ps.Payment)
+	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sig, &ps.Payment)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -66,7 +66,7 @@ func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPa
 	if strings.ToLower(ctrct.String()) != strings.ToLower(ps.Payment.MultiPayCtrct.String()) {
 		return nil, fmt.Errorf("Multipay ctrct mismatch, expected: " + ctrct.String())
 	}
-	_, sig, err := d8x_futures.CreatePaymentBrokerSignature(ps.Payment, p.Wallets[ps.Payment.ChainId])
+	_, sig, err := d8x_futures.RawCreatePaymentBrokerSignature(&ps.Payment, p.Wallets[ps.Payment.ChainId])
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, chainId i
 	if wallet.PrivateKey == nil {
 		return "", "", fmt.Errorf("No broker key defined for chain %d", chainId)
 	}
-	digest, sig, err := d8x_futures.CreateOrderBrokerSignature(
+	digest, sig, err := d8x_futures.RawCreateOrderBrokerSignature(
 		proxyAddr, chainId, wallet, int32(order.IPerpetualId.Int64()), uint32(order.BrokerFeeTbps),
 		order.TraderAddr.String(), order.IDeadline)
 	//proxyAddr common.Address, chainId int64, brokerWallet Wallet,

@@ -137,7 +137,7 @@ func TestSignPayment(t *testing.T) {
 	if err != nil {
 		t.Errorf("error creating wallet")
 	}
-	_, sg, err := d8x_futures.CreatePaymentBrokerSignature(summary, execWallet)
+	_, sg, err := d8x_futures.RawCreatePaymentBrokerSignature(&summary, execWallet)
 
 	data := d8x_futures.BrokerPaySignatureReq{
 		Payment:           summary,
@@ -175,7 +175,7 @@ func TestSignPayment(t *testing.T) {
 	if err != nil {
 		t.Errorf("decoding signature: %v", err)
 	}
-	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sigBytes, summary)
+	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sigBytes, &summary)
 	if err != nil {
 		t.Errorf("error RecoverPaymentSignatureAddr")
 	}
