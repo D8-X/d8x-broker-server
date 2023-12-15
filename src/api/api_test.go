@@ -15,12 +15,11 @@ import (
 
 func TestApproveTokenAmount(t *testing.T) {
 	pk := os.Getenv("PK")
-
 	CONFIG_PATH := "../../config/chainConfig.json"
 	CONFIG_RPC_PATH := "../../config/rpc.json"
 	if pk == "" {
 		fmt.Printf("Private key not set in environment (export PK)")
-		t.Fail()
+		t.FailNow()
 	}
 	chConf, err := config.LoadChainConfig(CONFIG_PATH)
 	if err != nil {

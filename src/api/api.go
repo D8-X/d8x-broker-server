@@ -89,7 +89,11 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	if err != nil {
 		return errors.New("Error creating NewKeyedTransactorWithChainID for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
 	}
-	auth.Nonce = nil
+	nonce, err := getNonce(client, a.Pen.Wallets[chainId].Address)
+	if err != nil {
+		return errors.New("Error getting nonce for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
+	}
+	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = uint64(300000)
 	auth.GasPrice = big.NewInt(1000000000)
 	approvalTx, err := tknInstance.Approve(auth, config.MultiPayCtrctAddr, getMaxUint256())
@@ -104,6 +108,14 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	slog.Info("Approval transaction hash: " + receipt.TxHash.Hex())
 	a.ApprovedTokens[key] = true
 	return nil
+}
+
+func getNonce(rpc *ethclient.Client, a common.Address) (uint64, error) {
+	nonce, err := rpc.PendingNonceAt(context.Background(), a)
+	if err != nil {
+		return 0, err
+	}
+	return nonce, nil
 }
 
 func getMaxUint256() *big.Int {
