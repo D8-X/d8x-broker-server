@@ -131,9 +131,8 @@ func TestSignPayment(t *testing.T) {
 	t.Log("brokerAddr = ", brokerAddrStr)
 	t.Log("execAddr = ", execAddrStr)
 
-	var execWallet d8x_futures.Wallet
 	pk := fmt.Sprintf("%x", execPk.D)
-	err = execWallet.NewWallet(pk, 1442, nil)
+	execWallet, err := d8x_futures.NewWallet(pk, 1442, nil)
 	if err != nil {
 		t.Errorf("error creating wallet")
 	}
