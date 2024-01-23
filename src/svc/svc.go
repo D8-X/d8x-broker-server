@@ -16,6 +16,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+func init() {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	})))
+}
+
 //go:embed ranky.txt
 var embedFS embed.FS
 var abc []byte
@@ -60,6 +66,7 @@ func RunBroker() {
 		env.KEYFILE_PATH,
 		env.CONFIG_RPC_PATH,
 	}
+
 	err := loadEnv(requiredEnvs)
 	if err != nil {
 		slog.Error("loading env: " + err.Error())

@@ -1,7 +1,9 @@
 version: '3'
 services:
   broker:
-    image: ghcr.io/d8-x/d8x-broker-server:main
+    build:
+      context: .
+      dockerfile: ./cmd/brokerapi/Dockerfile
     restart: always
     depends_on:
       - redis
@@ -11,6 +13,7 @@ services:
     networks:
       - app-net
     environment:
+      BROKER_FEE_TBPS: "${BROKER_FEE_TBPS}"
       REDIS_ADDR: "${REDIS_ADDR}"
       REDIS_PW: "${REDIS_PW}"
       CONFIG_PATH: /chain_config
@@ -24,10 +27,12 @@ services:
       - chain_config
       - rpc_config
     volumes:
-      - mydata:/keyfile
+      - keyvol:/keyfile
 
   executorws:
-    image: ghcr.io/d8-x/d8x-broker-exec-ws:main
+    build:
+      context: .
+      dockerfile: ./cmd/executorws/Dockerfile
     restart: always
     depends_on:
       - redis
@@ -69,8 +74,9 @@ networks:
 
 configs:
   chain_config:
-    file: ./chainConfig.json
+    file: ./config/chainConfig.json
   rpc_config:
-    file: ./rpcConfig.json
+    file: ./config/rpc.json
 volumes:
-  mydata:
+  keyvol:
+    external: true
