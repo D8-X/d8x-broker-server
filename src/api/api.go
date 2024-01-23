@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log/slog"
 	"math/big"
-	"math/rand"
 	"net"
 	"net/http"
 	"strconv"
@@ -74,11 +73,11 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 		return nil
 	}
 	config := a.Pen.ChainConfig[chainId]
-	rpcUrls := a.Pen.RpcConfig[chainId]
+	rpcUrls := a.Pen.RpcUrl[chainId]
 	if len(rpcUrls) == 0 {
 		return errors.New("No rpc url defined for chain " + strconv.Itoa(int(chainId)))
 	}
-	client, err := createRpcClient(rpcUrls)
+	client, err := utils.CreateRpcClient(rpcUrls)
 	if err != nil {
 		return errors.New("Error creating rpc cliet for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
 	}
@@ -99,7 +98,11 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = uint64(300_000)
-	auth.GasPrice, err = d8x_futures.GetGasPrice(client)
+	g, err := d8x_futures.GetGasPrice(client)
+	// mark up gas price
+	g.Mul(g, big.NewInt(15))
+	g.Div(g, big.NewInt(10))
+	auth.GasPrice = g
 	approvalTx, err := tknInstance.Approve(auth, config.MultiPayCtrctAddr, getMaxUint256())
 	if err != nil {
 		return errors.New("Error approving token for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
@@ -127,23 +130,4 @@ func getMaxUint256() *big.Int {
 	maxUint256.Exp(big.NewInt(2), big.NewInt(256), nil)
 	maxUint256.Sub(maxUint256, big.NewInt(1))
 	return maxUint256
-}
-
-func createRpcClient(rpcUrl []string) (*ethclient.Client, error) {
-	rnd := rand.Intn(len(rpcUrl))
-	var rpc *ethclient.Client
-	var err error
-	for trial := 0; ; trial++ {
-		rpc, err = ethclient.Dial(rpcUrl[rnd])
-		if err != nil {
-			if trial == 5 {
-				return nil, err
-			}
-			slog.Info("Rpc error" + err.Error() + " retrying " + strconv.Itoa(5-trial))
-			time.Sleep(time.Duration(2) * time.Second)
-		} else {
-			break
-		}
-	}
-	return rpc, nil
 }
