@@ -6,5 +6,9 @@
     {
         "chainId": 1442,
         "HTTP": ["https://rpc.public.zkevm-test.net"]
+    }, 
+    {
+        "chainId": 195,
+        "HTTP": ["https://testrpc.x1.tech/", "https://x1testrpc.okx.com/"]
     }
 ]

@@ -88,11 +88,11 @@ func RunBroker() {
 	slog.Info("starting REST API server")
 	// Start the rest api
 	app := &api.App{
-		Port:           viper.GetString(env.API_PORT),
-		BindAddr:       viper.GetString(env.API_BIND_ADDR),
-		Pen:            pen,
-		BrokerFeeTbps:  fee,
-		ApprovedTokens: make(map[string]bool),
+		Port:            viper.GetString(env.API_PORT),
+		BindAddr:        viper.GetString(env.API_BIND_ADDR),
+		Pen:             pen,
+		BrokerFeeTbps:   fee,
+		TokenApprovalTs: make(map[string]int64),
 	}
 	err = app.StartApiServer(viper.GetString(env.REDIS_ADDR),
 		viper.GetString(env.REDIS_PW))

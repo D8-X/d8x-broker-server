@@ -15,12 +15,11 @@ import (
 
 func TestApproveTokenAmount(t *testing.T) {
 	pk := os.Getenv("PK")
-
 	CONFIG_PATH := "../../config/chainConfig.json"
 	CONFIG_RPC_PATH := "../../config/rpc.json"
 	if pk == "" {
 		fmt.Printf("Private key not set in environment (export PK)")
-		t.Fail()
+		t.FailNow()
 	}
 	chConf, err := config.LoadChainConfig(CONFIG_PATH)
 	if err != nil {
@@ -39,11 +38,11 @@ func TestApproveTokenAmount(t *testing.T) {
 		t.Fail()
 	}
 	app := &App{
-		Port:           "80001",
-		BindAddr:       "0.0.0.0",
-		Pen:            pen,
-		BrokerFeeTbps:  60,
-		ApprovedTokens: make(map[string]bool),
+		Port:            "80001",
+		BindAddr:        "0.0.0.0",
+		Pen:             pen,
+		BrokerFeeTbps:   60,
+		TokenApprovalTs: make(map[string]int64),
 	}
 	if err != nil {
 		log.Fatalf("unable to create app: " + err.Error())
