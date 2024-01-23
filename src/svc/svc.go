@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"os"
 
 	"github.com/D8-X/d8x-broker-server/src/api"
 	"github.com/D8-X/d8x-broker-server/src/config"
@@ -18,6 +19,12 @@ import (
 //go:embed ranky.txt
 var embedFS embed.FS
 var abc []byte
+
+func init() {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	})))
+}
 
 func RunExecutorWs() {
 	requiredEnvs := []string{
