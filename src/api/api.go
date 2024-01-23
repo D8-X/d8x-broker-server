@@ -99,11 +99,7 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = uint64(300_000)
-	g, err := d8x_futures.GetGasPrice(client)
-	// mark up gas price
-	g.Mul(g, big.NewInt(15))
-	g.Div(g, big.NewInt(10))
-	auth.GasPrice = g
+	auth.GasPrice, err = d8x_futures.GetGasPrice(client)
 	approvalTx, err := tknInstance.Approve(auth, config.MultiPayCtrctAddr, getMaxUint256())
 	if err != nil {
 		return errors.New("Error approving token for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
