@@ -13,6 +13,7 @@ import (
 
 	"github.com/D8-X/d8x-broker-server/src/contracts"
 	"github.com/D8-X/d8x-broker-server/src/utils"
+	"github.com/D8-X/d8x-futures-go-sdk/pkg/d8x_futures"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -20,14 +21,16 @@ import (
 	"github.com/redis/rueidis"
 )
 
+const APPROVAL_EXPIRY_SEC int64 = 86400 * 7
+
 // App is dependency container for API server
 type App struct {
-	Port           string
-	BindAddr       string
-	Pen            utils.SignaturePen
-	BrokerFeeTbps  uint16
-	RedisClient    *utils.RueidisClient
-	ApprovedTokens map[string]bool
+	Port            string
+	BindAddr        string
+	Pen             utils.SignaturePen
+	BrokerFeeTbps   uint16
+	RedisClient     *utils.RueidisClient
+	TokenApprovalTs map[string]int64
 }
 
 // StartApiServer initializes and starts the api server. This func is blocking
@@ -64,7 +67,8 @@ func (a *App) StartApiServer(REDIS_ADDR string, REDIS_PW string) error {
 func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	chainIdBI := new(big.Int).SetInt64(chainId)
 	key := chainIdBI.String() + "." + tokenAddr.Hex()
-	if a.ApprovedTokens[key] {
+	now := time.Now().Unix()
+	if now-a.TokenApprovalTs[key] < APPROVAL_EXPIRY_SEC {
 		// already approved
 		slog.Info("Token already approved for key " + key)
 		return nil
@@ -94,8 +98,8 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 		return errors.New("Error getting nonce for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.GasLimit = uint64(300000)
-	auth.GasPrice = big.NewInt(1000000000)
+	auth.GasLimit = uint64(300_000)
+	auth.GasPrice, err = d8x_futures.GetGasPrice(client)
 	approvalTx, err := tknInstance.Approve(auth, config.MultiPayCtrctAddr, getMaxUint256())
 	if err != nil {
 		return errors.New("Error approving token for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
@@ -106,7 +110,7 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 		return err
 	}
 	slog.Info("Approval transaction hash: " + receipt.TxHash.Hex())
-	a.ApprovedTokens[key] = true
+	a.TokenApprovalTs[key] = time.Now().Unix()
 	return nil
 }
 
