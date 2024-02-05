@@ -21,9 +21,9 @@ func setVariables(_pen utils.SignaturePen) {
 	pen = _pen
 }
 
-func GetBrokerAddress(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen) {
+func (a *App) GetBrokerAddress(w http.ResponseWriter, r *http.Request) {
 	var brokerAddr string
-	for _, v := range pen.Wallets {
+	for _, v := range a.Pen.Wallets {
 		brokerAddr = v.Address.String()
 		break
 	}
@@ -46,7 +46,8 @@ func GetBrokerAddress(w http.ResponseWriter, r *http.Request, pen utils.Signatur
 	w.Write(jsonResponse)
 }
 
-func GetBrokerFee(w http.ResponseWriter, r *http.Request, fee uint16) {
+func (a *App) GetBrokerFee(w http.ResponseWriter, r *http.Request) {
+	fee := a.BrokerFeeTbps
 	res := utils.APIBrokerFeeRes{
 		BrokerFeeTbps: fee,
 	}
@@ -64,7 +65,10 @@ func GetBrokerFee(w http.ResponseWriter, r *http.Request, fee uint16) {
 // SignOrder signs an order with the broker key and sets the fee
 // Additional to the order, the broker needs to know the
 // chainId
-func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, feeTbps uint16, redis *utils.RueidisClient) {
+func (a *App) SignOrder(w http.ResponseWriter, r *http.Request) {
+	feeTbps := a.BrokerFeeTbps
+	pen := a.Pen
+	redis := a.RedisClient
 	// Read the JSON data from the request body
 	var jsonData []byte
 	if r.Body != nil {
@@ -104,7 +108,7 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 	w.Write(jsonResponse)
 }
 
-func SignPayment(w http.ResponseWriter, r *http.Request, a *App) {
+func (a *App) SignPayment(w http.ResponseWriter, r *http.Request) {
 	pen := a.Pen
 	// Read the JSON data from the request body
 	var jsonData []byte
