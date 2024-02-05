@@ -19,5 +19,6 @@ const (
 	// file with private key
 	KEYFILE_PATH = "KEYFILE_PATH"
 	// Broker key
-	BROKER_KEY = "BROKER_KEY"
+	BROKER_KEY          = "BROKER_KEY"
+	VIP3_REDUCTION_PERC = "VIP3_REDUCTION_PERC"
 )
