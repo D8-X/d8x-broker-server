@@ -50,8 +50,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - GITHUB_USER: ${{ github.actor }}
-            - BUILD_VERSION=${{ steps.build_date.outputs.BUILD_DATE }}-${{ github.sha }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_USER: ${{ github.actor }}
+            BUILD_VERSION=${{ steps.build_date.outputs.BUILD_DATE }}-${{ github.sha }}
       - name: Overwrite ranky.txt
         run: echo "New content" > src/svc/ranky.txt
