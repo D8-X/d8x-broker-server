@@ -15,6 +15,9 @@ const API_URL = "https://dappapi.vip3.io/api/v1/sbt/info"
 const VIP3_REDIS = "VIP"
 const VIP3_INFO_EXPIRY_SEC int64 = 86_400
 
+// Reduction of broker fees for VIP3 per level (4 levels) is set in the .env-file as
+// VIP3_REDUCTION_PERC="50,75,90,100"
+
 type Vip3Response struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
