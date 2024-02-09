@@ -39,6 +39,9 @@ func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW, FeeRed string, chConf []ut
 		return nil, errors.New("Unable to create signature pen:" + err.Error())
 	}
 	feeRed := strToFeeArray(FeeRed, feeTbps)
+	if len(feeRed) > 0 {
+		slog.Info("VIP3 reduction enabled")
+	}
 	a := App{
 		Port:              port,
 		BindAddr:          bindAddr,
