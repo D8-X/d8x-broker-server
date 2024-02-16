@@ -109,10 +109,10 @@ func (a *App) SignOrder(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
-// OrderSubmitted marks an order ID as being submitted to the chain,
+// OrdersSubmitted marks an order ID as being submitted to the chain,
 // adds it to the queue of order that are then published by the
 // websocket
-func (a *App) OrderSubmitted(w http.ResponseWriter, r *http.Request) {
+func (a *App) OrdersSubmitted(w http.ResponseWriter, r *http.Request) {
 	// Read the JSON data from the request body
 	var jsonData []byte
 	if r.Body != nil {
@@ -120,24 +120,26 @@ func (a *App) OrderSubmitted(w http.ResponseWriter, r *http.Request) {
 		jsonData, _ = io.ReadAll(r.Body)
 	}
 	type Post struct {
-		OrderId string `json:"orderId"`
+		OrderIds []string `json:"orderIds"`
 	}
 	var req Post
 	err := json.Unmarshal([]byte(jsonData), &req)
-	if err != nil {
-		errMsg := `Wrong argument types. Usage: { "orderId": "0xABCE..."}`
+	if err != nil || len(req.OrderIds) == 0 {
+		errMsg := `Wrong argument types. Usage: { "orderIds": "[0xABCE...,...]"}`
 		http.Error(w, string(formatError(errMsg)), http.StatusBadRequest)
 		return
 	}
-	id := strings.TrimPrefix(req.OrderId, "0x")
-	err = a.RedisClient.OrderSubmission(id)
+	for k := range req.OrderIds {
+		req.OrderIds[k] = strings.TrimPrefix(req.OrderIds[k], "0x")
+	}
+	err = a.RedisClient.OrderSubmission(req.OrderIds)
 	if err != nil {
 		slog.Error(err.Error())
 		response := string(formatError(err.Error()))
 		fmt.Fprint(w, response)
 		return
 	}
-	fmt.Fprint(w, `{"order-submitted": "success"}`)
+	fmt.Fprint(w, `{"orders-submitted": "success"}`)
 }
 
 func (a *App) SignPayment(w http.ResponseWriter, r *http.Request) {

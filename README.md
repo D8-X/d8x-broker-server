@@ -46,16 +46,16 @@ Response:
 
 ```
 
-*POST: /order-submitted*
+*POST: /orders-submitted*
 ```
 {
-    "orderId": "0c9b038026f5477710e5c1405f88f9f9433f5af60e96935611bfb5337959931a"
+    "orderIds": ["0x0c9b038026f5477710e5c1405f88f9f9433f5af60e96935611bfb5337959931a"]
 }
 ```
 
 Response:
 ```
-{"order-submitted": "success"}`
+{"orders-submitted": "success"}`
 ```
 or
 ```
@@ -64,6 +64,8 @@ or
 }
 
 ```
+Note that the response errors-out with the first occurrence of an error.
+
 
 POST: sign-payment
 ```

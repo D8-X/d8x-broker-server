@@ -24,8 +24,8 @@ func (a *App) RegisterRoutes(router chi.Router) {
 	})
 
 	// Endpoint: /order-submitted
-	router.Post("/order-submitted", func(w http.ResponseWriter, r *http.Request) {
-		a.OrderSubmitted(w, r)
+	router.Post("/orders-submitted", func(w http.ResponseWriter, r *http.Request) {
+		a.OrdersSubmitted(w, r)
 	})
 
 	// Endpoint: /payment-signature

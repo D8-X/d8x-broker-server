@@ -124,24 +124,26 @@ func (r *RueidisClient) PubOrder(order APIOrderSig, orderId string, chainId int6
 
 // OrderSubmission pushes the order id to the stack,
 // and publishes a message
-func (r *RueidisClient) OrderSubmission(orderId string) error {
-	// get order from redis
-	hm, err := (*r.Client).Do(r.Ctx, (*r.Client).B().Hgetall().Key(orderId).Build()).AsStrMap()
-	if err != nil {
-		return errors.New("Could not get id " + orderId + ": " + err.Error())
-	}
-	if len(hm) == 0 {
-		return errors.New("Could not find id " + orderId + " - expired or never submitted")
-	}
-	// add to stack
-	stackName := hm["PerpetualId"] + ":" + hm["ChainId"]
-	(*r.Client).Do(r.Ctx, (*r.Client).B().Lpush().Key(stackName).Element(orderId).Build())
+func (r *RueidisClient) OrderSubmission(orderIds []string) error {
+	for _, orderId := range orderIds {
+		// get order from redis
+		hm, err := (*r.Client).Do(r.Ctx, (*r.Client).B().Hgetall().Key(orderId).Build()).AsStrMap()
+		if err != nil {
+			return errors.New("Could not get id " + orderId + ": " + err.Error())
+		}
+		if len(hm) == 0 {
+			return errors.New("Could not find id " + orderId + " - expired or never submitted")
+		}
+		// add to stack
+		stackName := hm["PerpetualId"] + ":" + hm["ChainId"]
+		(*r.Client).Do(r.Ctx, (*r.Client).B().Lpush().Key(stackName).Element(orderId).Build())
 
-	// publish message
-	msg := stackName
-	err = (*r.Client).Do(r.Ctx, (*r.Client).B().Publish().Channel(CHANNEL_NEW_ORDER).Message(msg).Build()).Error()
-	if err != nil {
-		return err
+		// publish message
+		msg := stackName
+		err = (*r.Client).Do(r.Ctx, (*r.Client).B().Publish().Channel(CHANNEL_NEW_ORDER).Message(msg).Build()).Error()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
