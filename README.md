@@ -27,6 +27,7 @@ POST: /sign-order
     "chainId": 80001
 }
 ```
+note: entire order required for it to generate a proper order-id that is published in the broker-websocket
 
 Response:
 
@@ -42,7 +43,30 @@ Response:
     "chainId": 80001,
     "brokerSignature": "0x73ecb2d9ccd577b441333bb9d5fcd9a625cd2fdef5203d0b9808befab0e7e02053f8e0deac0602f1cc294f4706281f83a48745cee92a7bf61cef0516ec7514f21b"
 }
+
 ```
+
+*POST: /orders-submitted*
+```
+{
+    "orderIds": ["0x0c9b038026f5477710e5c1405f88f9f9433f5af60e96935611bfb5337959931a"]
+}
+```
+
+Response:
+```
+{"orders-submitted": "success"}`
+```
+or
+```
+{
+    "error":"Could not find id 0c9b038026f5477710e5c1405f88f9f9433f5af60e96935611bfb5337959931a - expired or never submitted"
+}
+
+```
+Note that the response errors-out with the first occurrence of an error.
+
+
 POST: sign-payment
 ```
 {
@@ -121,11 +145,11 @@ The order-id is a hexadecimal number (returned as string) without the "0x"-prefi
 
 # REDIS
 
-Upon signature of a new order, there is a Redis pub message `CHANNEL_NEW_ORDER` ("new-order")
+Upon signature of a new order, order data is stored in Redis with the key equal to the order-id. The data is set
+to expire after 120 seconds. Upon calling order submission on the 
+corresponding endpoint, the order id is added to a stack of open order ids, and there is a Redis pub message `CHANNEL_NEW_ORDER` ("new-order")
 with message "perpetualId:chainId".
-Order data is stored in Redis with the key equal to the order-id. The data is set
-to expire after 60 seconds. The order-id is
-added to the Redis stack. Upon receipt of the Redis pub message, the 
+Upon receipt of the Redis pub message, the 
 websocket-application loops through the stack of order-id's for the given perpetual
 and chain-id. If the order-id still has associated data (not older than 60s), the
 data is sent to all subscribers.

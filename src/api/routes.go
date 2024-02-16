@@ -23,6 +23,11 @@ func (a *App) RegisterRoutes(router chi.Router) {
 		a.SignOrder(w, r)
 	})
 
+	// Endpoint: /order-submitted
+	router.Post("/orders-submitted", func(w http.ResponseWriter, r *http.Request) {
+		a.OrdersSubmitted(w, r)
+	})
+
 	// Endpoint: /payment-signature
 	router.Post("/sign-payment", func(w http.ResponseWriter, r *http.Request) {
 		a.SignPayment(w, r)
