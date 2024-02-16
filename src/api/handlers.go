@@ -100,13 +100,44 @@ func (a *App) SignOrder(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("Error in signature request: " + err.Error())
 		response := string(formatError(err.Error()))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 	// Write the JSON response
 	w.Write(jsonResponse)
+}
+
+// OrderSubmitted marks an order ID as being submitted to the chain,
+// adds it to the queue of order that are then published by the
+// websocket
+func (a *App) OrderSubmitted(w http.ResponseWriter, r *http.Request) {
+	// Read the JSON data from the request body
+	var jsonData []byte
+	if r.Body != nil {
+		defer r.Body.Close()
+		jsonData, _ = io.ReadAll(r.Body)
+	}
+	type Post struct {
+		OrderId string `json:"orderId"`
+	}
+	var req Post
+	err := json.Unmarshal([]byte(jsonData), &req)
+	if err != nil {
+		errMsg := `Wrong argument types. Usage: { "orderId": "0xABCE..."}`
+		http.Error(w, string(formatError(errMsg)), http.StatusBadRequest)
+		return
+	}
+	id := strings.TrimPrefix(req.OrderId, "0x")
+	err = a.RedisClient.OrderSubmission(id)
+	if err != nil {
+		slog.Error(err.Error())
+		response := string(formatError(err.Error()))
+		fmt.Fprint(w, response)
+		return
+	}
+	fmt.Fprint(w, `{"order-submitted": "success"}`)
 }
 
 func (a *App) SignPayment(w http.ResponseWriter, r *http.Request) {
@@ -144,18 +175,18 @@ func (a *App) SignPayment(w http.ResponseWriter, r *http.Request) {
 	addr, err := pen.RecoverPaymentSignerAddr(req)
 	if err != nil {
 		response := string(formatError(err.Error()))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	if addr != req.Payment.Executor {
 		response := string(formatError("wrong signature"))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	// signature correct, check if this is a registered payment executor
 	if !findExecutor(pen, req.Payment.ChainId, addr) {
 		response := string(formatError("executor not allowed"))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	// ensure token is approved to be spent
@@ -163,14 +194,14 @@ func (a *App) SignPayment(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error(err.Error())
 		response := string(formatError("Error approving token spending"))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	// allowed executor, token approved, we can sign
 	jsonResponse, err := pen.GetBrokerPaymentSignatureResponse(req)
 	if err != nil {
 		response := string(formatError(err.Error()))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	// Set the Content-Type header to application/json
