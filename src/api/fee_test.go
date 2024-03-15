@@ -46,6 +46,10 @@ func TestGetVip3Level(t *testing.T) {
 		rpcConf,
 		400,
 	)
+	if err != nil {
+		slog.Error("new app creation failed: " + err.Error())
+		t.FailNow()
+	}
 	l := a.GetVip3Level("0x0aB6527027EcFF1144dEc3d78154fce309ac838c")
 
 	fmt.Print(l)

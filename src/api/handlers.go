@@ -15,12 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var pen utils.SignaturePen
-
-func setVariables(_pen utils.SignaturePen) {
-	pen = _pen
-}
-
 func (a *App) GetBrokerAddress(w http.ResponseWriter, r *http.Request) {
 	var brokerAddr string
 	for _, v := range a.Pen.Wallets {
