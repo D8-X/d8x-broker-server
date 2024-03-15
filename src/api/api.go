@@ -116,6 +116,10 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = uint64(300_000)
 	g, err := d8x_futures.GetGasPrice(client)
+	if err != nil {
+		slog.Error("Could not get gas price:" + err.Error())
+		return err
+	}
 	// mark up gas price
 	g.Mul(g, big.NewInt(15))
 	g.Div(g, big.NewInt(10))

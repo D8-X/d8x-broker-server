@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/D8-X/d8x-futures-go-sdk/config"
 	"github.com/D8-X/d8x-futures-go-sdk/pkg/contracts"
 	"github.com/D8-X/d8x-futures-go-sdk/pkg/d8x_futures"
 	"github.com/ethereum/go-ethereum/common"
@@ -53,7 +54,7 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 		return common.Address{}, fmt.Errorf("Multipay ctrct not found for chain: " + strconv.Itoa(int(ps.Payment.ChainId)))
 	}
 	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
-	if strings.ToLower(ctrct.String()) != strings.ToLower(ps.Payment.MultiPayCtrct.String()) {
+	if strings.EqualFold(ctrct.String(), ps.Payment.MultiPayCtrct.String()) {
 		return common.Address{}, fmt.Errorf("Multipay ctrct mismatch, expected: " + strings.ToLower(ctrct.String()))
 	}
 	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sig, &ps.Payment)
@@ -65,7 +66,7 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 
 func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPaySignatureReq) ([]byte, error) {
 	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
-	if strings.ToLower(ctrct.String()) != strings.ToLower(ps.Payment.MultiPayCtrct.String()) {
+	if strings.EqualFold(ctrct.String(), ps.Payment.MultiPayCtrct.String()) {
 		return nil, fmt.Errorf("Multipay ctrct mismatch, expected: " + ctrct.String())
 	}
 	w := p.Wallets[ps.Payment.ChainId]
@@ -151,7 +152,13 @@ func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (stri
 	co.TraderAddr = common.HexToAddress(order.TraderAddr)
 	co.BrokerFeeTbps = order.BrokerFeeTbps
 	co.BrokerSignature = order.BrokerSignature
-	d, err := d8x_futures.CreateOrderDigest(co, int(chainId), true, p.ChainConfig[chainId].PerpetualManagerProxyAddr.String())
+	c, err := config.GetDefaultChainConfigFromId(chainId)
+	if err != nil {
+		msg := fmt.Sprintf("Could not find chain config for id %d: %s", chainId, err.Error())
+		slog.Error(msg)
+		return "", "", err
+	}
+	d, err := d8x_futures.CreateOrderDigest(co, int(chainId), true, c.ProxyAddr.Hex())
 	if err != nil {
 		return "", "", err
 	}
@@ -166,10 +173,17 @@ func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (stri
 
 func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, chainId int64) (string, string, error) {
 	//
-	proxyAddr := p.ChainConfig[chainId].PerpetualManagerProxyAddr
+	c, err := config.GetDefaultChainConfigFromId(chainId)
+	if err != nil {
+		msg := fmt.Sprintf("Could not find chain config for id %d: %s", chainId, err.Error())
+		slog.Error(msg)
+		return "", "", err
+	}
+
+	proxyAddr := c.ProxyAddr
 	wallet := p.Wallets[chainId]
 	if wallet.PrivateKey == nil {
-		return "", "", fmt.Errorf("No broker key defined for chain %d", chainId)
+		return "", "", fmt.Errorf("no broker key defined for chain %d", chainId)
 	}
 	digest, sig, err := d8x_futures.RawCreateOrderBrokerSignature(
 		proxyAddr, chainId, wallet, int32(order.IPerpetualId.Int64()), uint32(order.BrokerFeeTbps),
@@ -210,7 +224,7 @@ func createWalletMap(configList []ChainConfig, privateKeyHex string, rpcUrlMap m
 		}
 		wallet, err := d8x_futures.NewWallet(privateKeyHex, c.ChainId, client)
 		if err != nil {
-			return nil, fmt.Errorf("error casting public key to ECDSA")
+			return nil, fmt.Errorf("error casting public key to ECDSA:" + err.Error())
 		}
 		walletMap[c.ChainId] = wallet
 	}
