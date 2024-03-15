@@ -28,5 +28,11 @@
     "name": "arbitrumSepolia",
     "multiPayCtrctAddr": "0x60Eba5B5ba7Bd4694886CC5ecc0642D6178c2c86",
     "allowedExecutors": []
+  },
+  {
+    "chainId": 80085,
+    "name": "artio",
+    "multiPayCtrctAddr": "0xDa7f988605Abe824dF767Aa583d8fD60f09E23D0",
+    "allowedExecutors": []
   }
 ]
