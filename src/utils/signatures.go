@@ -224,7 +224,7 @@ func createWalletMap(configList []ChainConfig, privateKeyHex string, rpcUrlMap m
 		}
 		wallet, err := d8x_futures.NewWallet(privateKeyHex, c.ChainId, client)
 		if err != nil {
-			return nil, fmt.Errorf("error casting public key to ECDSA")
+			return nil, fmt.Errorf("error casting public key to ECDSA:" + err.Error())
 		}
 		walletMap[c.ChainId] = wallet
 	}
