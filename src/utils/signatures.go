@@ -30,14 +30,25 @@ type SignaturePen struct {
 }
 
 func NewSignaturePen(privateKeyHex string, chConf []ChainConfig, rpcConf []RpcConfig) (SignaturePen, error) {
-	rpcMap := createRpcConfigMap(rpcConf)
 
-	wallets, err := createWalletMap(chConf, privateKeyHex, rpcMap)
+	activeChains := make(map[int64]bool, len(chConf))
+	for _, conf := range chConf {
+		if len(conf.AllowedExecutors) > 0 {
+			// we have executors whitelisted, so we activate the chain
+			activeChains[conf.ChainId] = true
+		}
+	}
+	if len(activeChains) == 0 {
+		return SignaturePen{}, errors.New("specify allowed executors")
+	}
+	rpcMap := createRpcConfigMap(rpcConf, activeChains)
+
+	wallets, err := createWalletMap(chConf, activeChains, privateKeyHex, rpcMap)
 	if err != nil {
 		return SignaturePen{}, err
 	}
 	pen := SignaturePen{
-		ChainConfig: createChainConfigMap(chConf),
+		ChainConfig: createChainConfigMap(chConf, activeChains),
 		RpcUrl:      rpcMap,
 		Wallets:     wallets,
 	}
@@ -194,26 +205,33 @@ func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, chainId i
 	return digest, sig, err
 }
 
-func createChainConfigMap(configList []ChainConfig) map[int64]ChainConfig {
+func createChainConfigMap(configList []ChainConfig, activeChains map[int64]bool) map[int64]ChainConfig {
 	config := make(map[int64]ChainConfig)
 	for _, c := range configList {
-		slog.Info("Chain config for chain " + strconv.Itoa(int(c.ChainId)))
-		config[c.ChainId] = c
+		if _, exists := activeChains[c.ChainId]; exists {
+			slog.Info("Chain config for chain " + strconv.Itoa(int(c.ChainId)))
+			config[c.ChainId] = c
+		}
 	}
 	return config
 }
 
-func createRpcConfigMap(configList []RpcConfig) map[int64][]string {
+func createRpcConfigMap(configList []RpcConfig, activeChains map[int64]bool) map[int64][]string {
 	config := make(map[int64][]string)
 	for _, c := range configList {
-		config[c.ChainId] = c.Rpc
+		if _, exists := activeChains[c.ChainId]; exists {
+			config[c.ChainId] = c.Rpc
+		}
 	}
 	return config
 }
 
-func createWalletMap(configList []ChainConfig, privateKeyHex string, rpcUrlMap map[int64][]string) (map[int64]*d8x_futures.Wallet, error) {
+func createWalletMap(configList []ChainConfig, activeChains map[int64]bool, privateKeyHex string, rpcUrlMap map[int64][]string) (map[int64]*d8x_futures.Wallet, error) {
 	walletMap := make(map[int64]*d8x_futures.Wallet)
 	for _, c := range configList {
+		if _, exists := activeChains[c.ChainId]; !exists {
+			continue
+		}
 		rpcUrls := rpcUrlMap[c.ChainId]
 		if len(rpcUrls) == 0 {
 			msg := fmt.Sprintf("createWalletMap could not find RPC url for chain ID %d", c.ChainId)
