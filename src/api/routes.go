@@ -13,6 +13,10 @@ func (a *App) RegisterRoutes(router chi.Router) {
 		a.GetBrokerAddress(w, r)
 	})
 
+	router.Get("/chain-config", func(w http.ResponseWriter, r *http.Request) {
+		a.GetChainConfig(w, r)
+	})
+
 	// Endpoint: /broker-fee?perpetualId={perpetualId}
 	router.Get("/broker-fee", func(w http.ResponseWriter, r *http.Request) {
 		a.GetBrokerFee(w, r)

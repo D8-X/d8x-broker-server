@@ -46,6 +46,11 @@ Response:
 
 ```
 
+
+GET: /chain-config
+
+`[{"chainId":421614,"name":"arbitrumSepolia","multiPayCtrctAddr":"0x60eba5b5ba7bd4694886cc5ecc0642d6178c2c86","allowedExecutors":[]},...`
+
 *POST: /orders-submitted*
 ```
 {

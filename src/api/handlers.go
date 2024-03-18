@@ -15,6 +15,27 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+func (a *App) GetChainConfig(w http.ResponseWriter, r *http.Request) {
+	config := make([]utils.ChainConfig, len(a.Pen.ChainConfig))
+	var k int
+	for _, conf := range a.Pen.ChainConfig {
+		config[k] = conf
+		k++
+	}
+	// Marshal the struct into JSON
+	jsonResponse, err := json.Marshal(config)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the JSON response
+	w.Write(jsonResponse)
+}
+
 func (a *App) GetBrokerAddress(w http.ResponseWriter, r *http.Request) {
 	var brokerAddr string
 	for _, v := range a.Pen.Wallets {
