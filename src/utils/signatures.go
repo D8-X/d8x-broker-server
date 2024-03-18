@@ -65,8 +65,8 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 		return common.Address{}, fmt.Errorf("Multipay ctrct not found for chain: " + strconv.Itoa(int(ps.Payment.ChainId)))
 	}
 	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
-	if strings.EqualFold(ctrct.String(), ps.Payment.MultiPayCtrct.String()) {
-		msg := fmt.Sprintf("multipay ctrct mismatch, expected: %s on chain %d", ctrct.String(), ps.Payment.ChainId)
+	if strings.EqualFold(ctrct.Hex(), ps.Payment.MultiPayCtrct.Hex()) {
+		msg := fmt.Sprintf("multipay ctrct mismatch, expected: %s got: %s on chain %d", ctrct.String(), ps.Payment.MultiPayCtrct.Hex(), ps.Payment.ChainId)
 		return common.Address{}, fmt.Errorf(msg)
 	}
 	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sig, &ps.Payment)
