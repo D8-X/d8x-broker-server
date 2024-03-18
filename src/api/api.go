@@ -86,7 +86,7 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	now := time.Now().Unix()
 	if now-a.TokenApprovalTs[key] < APPROVAL_EXPIRY_SEC {
 		// already approved
-		slog.Info("Token already approved for key " + key)
+		slog.Info("Token already approved for chain.tkn=" + key)
 		return nil
 	}
 	config := a.Pen.ChainConfig[chainId]
@@ -133,6 +133,7 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	if err != nil {
 		return err
 	}
+	slog.Info("Approved 'chain.token':" + key)
 	slog.Info("Approval transaction hash: " + receipt.TxHash.Hex())
 	a.TokenApprovalTs[key] = time.Now().Unix()
 	return nil

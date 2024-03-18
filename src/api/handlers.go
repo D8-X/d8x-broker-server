@@ -170,17 +170,20 @@ func (a *App) SignPayment(w http.ResponseWriter, r *http.Request) {
 	}
 	addr, err := pen.RecoverPaymentSignerAddr(req)
 	if err != nil {
+		slog.Error("SignPayment RecoverPaymentSignerAddr:" + err.Error())
 		response := string(formatError(err.Error()))
 		fmt.Fprint(w, response)
 		return
 	}
 	if addr != req.Payment.Executor {
+		slog.Error("SignPayment: wrong referrer signature")
 		response := string(formatError("wrong signature"))
 		fmt.Fprint(w, response)
 		return
 	}
 	// signature correct, check if this is a registered payment executor
 	if !findExecutor(pen, req.Payment.ChainId, addr) {
+		slog.Error("SignPayment: executor not whitelisted")
 		response := string(formatError("executor not allowed"))
 		fmt.Fprint(w, response)
 		return
@@ -188,9 +191,9 @@ func (a *App) SignPayment(w http.ResponseWriter, r *http.Request) {
 	// ensure token is approved to be spent
 	err = a.ApproveToken(req.Payment.ChainId, req.Payment.Token)
 	if err != nil {
-		msg := fmt.Sprintf("Error approving token for chain %d %s", req.Payment.ChainId, err.Error())
+		msg := fmt.Sprintf("error approving token for chain %d %s", req.Payment.ChainId, err.Error())
 		slog.Error(msg)
-		response := string(formatError("Error approving token spending"))
+		response := string(formatError("error approving token spending"))
 		fmt.Fprint(w, response)
 		return
 	}
