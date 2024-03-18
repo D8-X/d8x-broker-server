@@ -114,7 +114,7 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 		return errors.New("Error getting nonce for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.GasLimit = 0
+	auth.GasLimit = 0 //estimate
 	g, err := d8x_futures.GetGasPrice(client)
 	if err != nil {
 		slog.Error("Could not get gas price:" + err.Error())
