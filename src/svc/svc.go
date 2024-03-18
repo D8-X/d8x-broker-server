@@ -97,6 +97,7 @@ func RunBroker() {
 		fee)
 	if err != nil {
 		slog.Error("API init: " + err.Error())
+		return
 	}
 	slog.Info("starting REST API server")
 	// Start the rest api
