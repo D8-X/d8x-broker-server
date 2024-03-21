@@ -24,29 +24,46 @@ const APPROVAL_EXPIRY_SEC int64 = 86400 * 7
 
 // App is dependency container for API server
 type App struct {
-	Port            string
-	BindAddr        string
-	Pen             utils.SignaturePen
-	BrokerFeeTbps   uint16
-	RedisClient     *utils.RueidisClient
-	TokenApprovalTs map[string]int64
+	Port              string
+	BindAddr          string
+	Pen               utils.SignaturePen
+	BrokerFeeTbps     uint16
+	BrokerFeeLvlsTbps []uint16
+	RedisClient       *utils.RueidisClient
+	TokenApprovalTs   map[string]int64
 }
 
-// StartApiServer initializes and starts the api server. This func is blocking
-func (a *App) StartApiServer(REDIS_ADDR string, REDIS_PW string) error {
-	if len(a.Port) == 0 {
-		return errors.New("could not start the API server, Port must be provided")
+func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW, FeeRed string, chConf []utils.ChainConfig, rpcConf []utils.RpcConfig, feeTbps uint16) (*App, error) {
+	pen, err := utils.NewSignaturePen(pk, chConf, rpcConf)
+	if err != nil {
+		return nil, errors.New("Unable to create signature pen:" + err.Error())
 	}
-
+	feeRed := strToFeeArray(FeeRed, feeTbps)
+	if len(feeRed) > 0 {
+		slog.Info("VIP3 reduction enabled")
+	}
+	a := App{
+		Port:              port,
+		BindAddr:          bindAddr,
+		Pen:               pen,
+		BrokerFeeTbps:     feeTbps,
+		BrokerFeeLvlsTbps: feeRed,
+		TokenApprovalTs:   make(map[string]int64),
+	}
 	client, err := rueidis.NewClient(
 		rueidis.ClientOption{InitAddress: []string{REDIS_ADDR}, Password: REDIS_PW})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	a.RedisClient = &utils.RueidisClient{
 		Client: &client,
 		Ctx:    context.Background(),
 	}
+	return &a, nil
+}
+
+// StartApiServer initializes and starts the api server. This func is blocking
+func (a *App) StartApiServer() error {
 	router := chi.NewRouter()
 	a.RegisterGlobalMiddleware(router)
 	a.RegisterRoutes(router)
@@ -56,7 +73,7 @@ func (a *App) StartApiServer(REDIS_ADDR string, REDIS_PW string) error {
 		a.Port,
 	)
 	slog.Info("starting api server host_port " + addr)
-	err = http.ListenAndServe(
+	err := http.ListenAndServe(
 		addr,
 		router,
 	)
@@ -69,7 +86,7 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	now := time.Now().Unix()
 	if now-a.TokenApprovalTs[key] < APPROVAL_EXPIRY_SEC {
 		// already approved
-		slog.Info("Token already approved for key " + key)
+		slog.Info("Token already approved for chain.tkn=" + key)
 		return nil
 	}
 	config := a.Pen.ChainConfig[chainId]
@@ -97,8 +114,12 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 		return errors.New("Error getting nonce for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.GasLimit = uint64(300_000)
+	auth.GasLimit = 0 //estimate
 	g, err := d8x_futures.GetGasPrice(client)
+	if err != nil {
+		slog.Error("Could not get gas price:" + err.Error())
+		return err
+	}
 	// mark up gas price
 	g.Mul(g, big.NewInt(15))
 	g.Div(g, big.NewInt(10))
@@ -112,6 +133,7 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	if err != nil {
 		return err
 	}
+	slog.Info("Approved 'chain.token':" + key)
 	slog.Info("Approval transaction hash: " + receipt.TxHash.Hex())
 	a.TokenApprovalTs[key] = time.Now().Unix()
 	return nil

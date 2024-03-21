@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -10,11 +11,10 @@ import (
 )
 
 type ChainConfig struct {
-	ChainId                   int64            `json:"chainId"`
-	Name                      string           `json:"name"`
-	PerpetualManagerProxyAddr common.Address   `json:"perpetualManagerProxyAddr"`
-	MultiPayCtrctAddr         common.Address   `json:"multiPayCtrctAddr"`
-	AllowedExecutors          []common.Address `json:"allowedExecutors"`
+	ChainId           int64            `json:"chainId"`
+	Name              string           `json:"name"`
+	MultiPayCtrctAddr common.Address   `json:"multiPayCtrctAddr"`
+	AllowedExecutors  []common.Address `json:"allowedExecutors"`
 }
 
 type RpcConfig struct {
@@ -97,14 +97,14 @@ type RueidisClient struct {
 }
 
 const CHANNEL_NEW_ORDER = "new-order"
-const EXPIRY_HDATA_SEC = 60
+const EXPIRY_HDATA_SEC = 120
 
-// we store the order in redis with the order id as key, push the order id to the stack,
-// and publish a message
+// PubOrder stores the order in redis with the order id as key
 func (r *RueidisClient) PubOrder(order APIOrderSig, orderId string, chainId int64) error {
 	perpetualIdStr := strconv.Itoa(int(order.PerpetualId))
 	chainIdStr := strconv.Itoa(int(chainId))
 	err := (*r.Client).Do(r.Ctx, (*r.Client).B().Hset().Key(orderId).FieldValue().
+		FieldValue("ChainId", chainIdStr).
 		FieldValue("PerpetualId", perpetualIdStr).
 		FieldValue("TraderAddr", order.TraderAddr).
 		FieldValue("Deadline", strconv.Itoa(int(order.Deadline))).
@@ -118,13 +118,31 @@ func (r *RueidisClient) PubOrder(order APIOrderSig, orderId string, chainId int6
 	}
 	// set expiry of key
 	(*r.Client).Do(r.Ctx, (*r.Client).B().Expire().Key(orderId).Seconds(EXPIRY_HDATA_SEC).Build())
+	return nil
+}
 
-	stackName := perpetualIdStr + ":" + chainIdStr
-	(*r.Client).Do(r.Ctx, (*r.Client).B().Lpush().Key(stackName).Element(orderId).Build())
-	msg := stackName
-	err = (*r.Client).Do(r.Ctx, (*r.Client).B().Publish().Channel(CHANNEL_NEW_ORDER).Message(msg).Build()).Error()
-	if err != nil {
-		return err
+// OrderSubmission pushes the order id to the stack,
+// and publishes a message
+func (r *RueidisClient) OrderSubmission(orderIds []string) error {
+	for _, orderId := range orderIds {
+		// get order from redis
+		hm, err := (*r.Client).Do(r.Ctx, (*r.Client).B().Hgetall().Key(orderId).Build()).AsStrMap()
+		if err != nil {
+			return errors.New("Could not get id " + orderId + ": " + err.Error())
+		}
+		if len(hm) == 0 {
+			return errors.New("Could not find id " + orderId + " - expired or never submitted")
+		}
+		// add to stack
+		stackName := hm["PerpetualId"] + ":" + hm["ChainId"]
+		(*r.Client).Do(r.Ctx, (*r.Client).B().Lpush().Key(stackName).Element(orderId).Build())
+
+		// publish message
+		msg := stackName
+		err = (*r.Client).Do(r.Ctx, (*r.Client).B().Publish().Channel(CHANNEL_NEW_ORDER).Message(msg).Build()).Error()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

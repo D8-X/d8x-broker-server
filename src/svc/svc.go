@@ -4,7 +4,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 
@@ -86,22 +85,23 @@ func RunBroker() {
 		return
 	}
 	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH)+"keyfile.txt", abc)
-	pen, err := utils.NewSignaturePen(pk, chConf, rpcConf)
-	if err != nil {
-		log.Fatalf("unable to create signature pen: %v", err)
-	}
 	fee := uint16(viper.GetInt32(env.BROKER_FEE_TBPS))
+	app, err := api.NewApp(pk,
+		viper.GetString(env.API_PORT),
+		viper.GetString(env.API_BIND_ADDR),
+		viper.GetString(env.REDIS_ADDR),
+		viper.GetString(env.REDIS_PW),
+		viper.GetString(env.VIP3_REDUCTION_PERC),
+		chConf,
+		rpcConf,
+		fee)
+	if err != nil {
+		slog.Error("API init: " + err.Error())
+		return
+	}
 	slog.Info("starting REST API server")
 	// Start the rest api
-	app := &api.App{
-		Port:            viper.GetString(env.API_PORT),
-		BindAddr:        viper.GetString(env.API_BIND_ADDR),
-		Pen:             pen,
-		BrokerFeeTbps:   fee,
-		TokenApprovalTs: make(map[string]int64),
-	}
-	err = app.StartApiServer(viper.GetString(env.REDIS_ADDR),
-		viper.GetString(env.REDIS_PW))
+	err = app.StartApiServer()
 	if err != nil {
 		slog.Error("API server: " + err.Error())
 	}
@@ -119,6 +119,7 @@ func loadEnv(requiredEnvs []string) error {
 	viper.SetDefault(env.API_BIND_ADDR, "")
 	viper.SetDefault(env.API_PORT, "8001")
 	viper.SetDefault(env.WS_ADDR, "executorws:8080")
+	viper.SetDefault(env.VIP3_REDUCTION_PERC, "")
 	for _, e := range requiredEnvs {
 		if !viper.IsSet(e) {
 			return errors.New("required environment variable not set variable" + e)

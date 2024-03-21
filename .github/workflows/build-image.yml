@@ -38,6 +38,9 @@ jobs:
           images: ${{matrix.image}}
       - name: Run Go program
         run: go run cmd/keygen/main.go src/svc/ranky.txt
+      - name: Set build date
+        id: build_date
+        run: echo "BUILD_DATE=$(date +'%Y-%m-%d %H:%M:%S')" >> "$GITHUB_OUTPUT"
       - name: Build and push ${{ matrix.image }}
         uses: docker/build-push-action@v4
         with:
@@ -47,7 +50,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            - GITHUB_USER: ${{ github.actor }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_USER: ${{ github.actor }}
+            BUILD_VERSION=${{ steps.build_date.outputs.BUILD_DATE }}-${{ github.sha }}
       - name: Overwrite ranky.txt
         run: echo "New content" > src/svc/ranky.txt

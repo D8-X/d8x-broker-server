@@ -15,15 +15,30 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var pen utils.SignaturePen
+func (a *App) GetChainConfig(w http.ResponseWriter, r *http.Request) {
+	config := make([]utils.ChainConfig, len(a.Pen.ChainConfig))
+	var k int
+	for _, conf := range a.Pen.ChainConfig {
+		config[k] = conf
+		k++
+	}
+	// Marshal the struct into JSON
+	jsonResponse, err := json.Marshal(config)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-func setVariables(_pen utils.SignaturePen) {
-	pen = _pen
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the JSON response
+	w.Write(jsonResponse)
 }
 
-func GetBrokerAddress(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen) {
+func (a *App) GetBrokerAddress(w http.ResponseWriter, r *http.Request) {
 	var brokerAddr string
-	for _, v := range pen.Wallets {
+	for _, v := range a.Pen.Wallets {
 		brokerAddr = v.Address.String()
 		break
 	}
@@ -46,7 +61,10 @@ func GetBrokerAddress(w http.ResponseWriter, r *http.Request, pen utils.Signatur
 	w.Write(jsonResponse)
 }
 
-func GetBrokerFee(w http.ResponseWriter, r *http.Request, fee uint16) {
+func (a *App) GetBrokerFee(w http.ResponseWriter, r *http.Request) {
+
+	addr := r.URL.Query().Get("addr")
+	fee := a.getBrokerFeeTbps(addr)
 	res := utils.APIBrokerFeeRes{
 		BrokerFeeTbps: fee,
 	}
@@ -64,7 +82,9 @@ func GetBrokerFee(w http.ResponseWriter, r *http.Request, fee uint16) {
 // SignOrder signs an order with the broker key and sets the fee
 // Additional to the order, the broker needs to know the
 // chainId
-func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, feeTbps uint16, redis *utils.RueidisClient) {
+func (a *App) SignOrder(w http.ResponseWriter, r *http.Request) {
+	pen := a.Pen
+	redis := a.RedisClient
 	// Read the JSON data from the request body
 	var jsonData []byte
 	if r.Body != nil {
@@ -90,12 +110,12 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 		return
 	}
 	slog.Info("Order signature request: trader " + string(req.Order.TraderAddr[0:8]) + "... Perpetual " + strconv.Itoa(int(req.Order.PerpetualId)))
-	req.Order.BrokerFeeTbps = feeTbps
+	req.Order.BrokerFeeTbps = a.getBrokerFeeTbps(req.Order.TraderAddr)
 	jsonResponse, err := pen.GetBrokerOrderSignatureResponse(req.Order, int64(req.ChainId), redis)
 	if err != nil {
 		slog.Error("Error in signature request: " + err.Error())
 		response := string(formatError(err.Error()))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	// Set the Content-Type header to application/json
@@ -104,7 +124,40 @@ func SignOrder(w http.ResponseWriter, r *http.Request, pen utils.SignaturePen, f
 	w.Write(jsonResponse)
 }
 
-func SignPayment(w http.ResponseWriter, r *http.Request, a *App) {
+// OrdersSubmitted marks an order ID as being submitted to the chain,
+// adds it to the queue of order that are then published by the
+// websocket
+func (a *App) OrdersSubmitted(w http.ResponseWriter, r *http.Request) {
+	// Read the JSON data from the request body
+	var jsonData []byte
+	if r.Body != nil {
+		defer r.Body.Close()
+		jsonData, _ = io.ReadAll(r.Body)
+	}
+	type Post struct {
+		OrderIds []string `json:"orderIds"`
+	}
+	var req Post
+	err := json.Unmarshal([]byte(jsonData), &req)
+	if err != nil || len(req.OrderIds) == 0 {
+		errMsg := `Wrong argument types. Usage: { "orderIds": "[0xABCE...,...]"}`
+		http.Error(w, string(formatError(errMsg)), http.StatusBadRequest)
+		return
+	}
+	for k := range req.OrderIds {
+		req.OrderIds[k] = strings.TrimPrefix(req.OrderIds[k], "0x")
+	}
+	err = a.RedisClient.OrderSubmission(req.OrderIds)
+	if err != nil {
+		slog.Error(err.Error())
+		response := string(formatError(err.Error()))
+		fmt.Fprint(w, response)
+		return
+	}
+	fmt.Fprint(w, `{"orders-submitted": "success"}`)
+}
+
+func (a *App) SignPayment(w http.ResponseWriter, r *http.Request) {
 	pen := a.Pen
 	// Read the JSON data from the request body
 	var jsonData []byte
@@ -138,34 +191,38 @@ func SignPayment(w http.ResponseWriter, r *http.Request, a *App) {
 	}
 	addr, err := pen.RecoverPaymentSignerAddr(req)
 	if err != nil {
+		slog.Error("SignPayment RecoverPaymentSignerAddr:" + err.Error())
 		response := string(formatError(err.Error()))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	if addr != req.Payment.Executor {
+		slog.Error("SignPayment: wrong referrer signature")
 		response := string(formatError("wrong signature"))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	// signature correct, check if this is a registered payment executor
 	if !findExecutor(pen, req.Payment.ChainId, addr) {
+		slog.Error("SignPayment: executor not whitelisted")
 		response := string(formatError("executor not allowed"))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	// ensure token is approved to be spent
 	err = a.ApproveToken(req.Payment.ChainId, req.Payment.Token)
 	if err != nil {
-		slog.Error(err.Error())
-		response := string(formatError("Error approving token spending"))
-		fmt.Fprintf(w, response)
+		msg := fmt.Sprintf("error approving token for chain %d %s", req.Payment.ChainId, err.Error())
+		slog.Error(msg)
+		response := string(formatError("error approving token spending"))
+		fmt.Fprint(w, response)
 		return
 	}
 	// allowed executor, token approved, we can sign
 	jsonResponse, err := pen.GetBrokerPaymentSignatureResponse(req)
 	if err != nil {
 		response := string(formatError(err.Error()))
-		fmt.Fprintf(w, response)
+		fmt.Fprint(w, response)
 		return
 	}
 	// Set the Content-Type header to application/json

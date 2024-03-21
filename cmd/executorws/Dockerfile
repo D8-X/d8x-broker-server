@@ -1,10 +1,11 @@
 FROM golang:1.21
+ARG BUILD_VERSION
 WORKDIR /broker
 COPY . . 
 
 #RUN apt update
 RUN go mod download && go mod verify
-RUN go build -o /usr/local/bin/app ./cmd/executorws/main.go
+RUN go build -ldflags "-X 'main.VERSION=${BUILD_VERSION}'" -o /usr/local/bin/app ./cmd/executorws/main.go
 
 FROM debian:bookworm-slim
 COPY --from=0 /usr/local/bin/app /usr/local/bin/app
