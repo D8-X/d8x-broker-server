@@ -11,12 +11,17 @@ import (
 )
 
 type ChainConfig struct {
-	ChainId           int64            `json:"chainId"`
-	Name              string           `json:"name"`
-	MultiPayCtrctAddr common.Address   `json:"multiPayCtrctAddr"`
-	AllowedExecutors  []common.Address `json:"allowedExecutors"`
+	ChainId           int64
+	Name              string
+	AllowedExecutors  []common.Address
+	MultiPayCtrctAddr common.Address
 }
 
+type ChainConfigFile struct {
+	ChainId          int64            `json:"chainId"`
+	Name             string           `json:"name"`
+	AllowedExecutors []common.Address `json:"allowedExecutors"`
+}
 type RpcConfig struct {
 	ChainId int64    `json:"chainId"`
 	Rpc     []string `json:"HTTP"`
