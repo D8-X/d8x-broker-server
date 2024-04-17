@@ -3,7 +3,7 @@ module github.com/D8-X/d8x-broker-server
 go 1.21
 
 require (
-	github.com/D8-X/d8x-futures-go-sdk v0.4.8 // direct
+	github.com/D8-X/d8x-futures-go-sdk v0.4.10 // direct
 	github.com/spf13/viper v1.17.0 // direct
 )
 
@@ -31,8 +31,8 @@ require (
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/crypto v0.22.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -62,5 +62,5 @@ require (
 	github.com/btcsuite/btcd v0.0.0-20171128150713-2e60448ffcc6 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/forta-network/go-multicall v0.0.0-20230701154355-9467c4ddaa83 // indirect
-	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 )
