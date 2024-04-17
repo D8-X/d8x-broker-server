@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/ethereum/go-ethereum v1.13.10
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-chi/chi/v5 v5.0.10
@@ -59,8 +59,8 @@ require (
 )
 
 require (
-	github.com/btcsuite/btcd v0.0.0-20171128150713-2e60448ffcc6 // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.3.3 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
 	github.com/forta-network/go-multicall v0.0.0-20230701154355-9467c4ddaa83 // indirect
 	golang.org/x/net v0.21.0 // indirect
 )
