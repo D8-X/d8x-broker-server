@@ -67,7 +67,7 @@ func TestGetVip3Level(t *testing.T) {
 func TestGetBrokerFeeTbps(t *testing.T) {
 	chConf, _ := config.LoadChainConfig("../../config/chainConfig.json")
 	rpcConf, _ := config.LoadRpcConfig("../../config/rpc.json")
-	conf := "50,75,90"
+	conf := "1101:50,75,90"
 	//conf := ""
 	a, err := NewApp(
 		"c3aadd4417f0f918fe7a53d7c6c75fa65352a1ef5c29097f0ce5ba8dbf05e08c",
@@ -84,15 +84,15 @@ func TestGetBrokerFeeTbps(t *testing.T) {
 		slog.Error(err.Error())
 		t.FailNow()
 	}
-	fee1 := a.getBrokerFeeTbps("0xB8aAEC178f5b30B6Bcd75740fB64F0369010faDF")
-	fee2 := a.getBrokerFeeTbps("0xb47Da69AC606b38d89dBD1b58389e6A1eF0d3705")
+	fee1 := a.getBrokerFeeTbps("0xB8aAEC178f5b30B6Bcd75740fB64F0369010faDF", 196)
+	fee2 := a.getBrokerFeeTbps("0xdA5b972BdA66112E0D9035425AbAda4DaC933C30", 1101)
 	fmt.Println("Fee ", fee1)
 	fmt.Println("Fee ", fee2)
 }
 
 func TestStrToFeeArray(t *testing.T) {
-	v := strToFeeArray("50,75,90,100", 60)
+	v := vip3ToFeeMap("50,75,90,100", 60)
 	fmt.Println(v)
-	v = strToFeeArray("", 60)
+	v = vip3ToFeeMap("", 60)
 	fmt.Println(v)
 }

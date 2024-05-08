@@ -28,7 +28,7 @@ type App struct {
 	BindAddr          string
 	Pen               utils.SignaturePen
 	BrokerFeeTbps     uint16
-	BrokerFeeLvlsTbps []uint16
+	BrokerFeeLvlsTbps map[int][]uint16
 	RedisClient       *utils.RueidisClient
 	TokenApprovalTs   map[string]int64
 }
@@ -38,7 +38,7 @@ func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW, FeeRed string, chConf []ut
 	if err != nil {
 		return nil, errors.New("Unable to create signature pen:" + err.Error())
 	}
-	feeRed := strToFeeArray(FeeRed, feeTbps)
+	feeRed := vip3ToFeeMap(FeeRed, feeTbps)
 	if len(feeRed) > 0 {
 		slog.Info("VIP3 reduction enabled")
 	}
