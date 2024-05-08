@@ -64,7 +64,18 @@ func (a *App) GetBrokerAddress(w http.ResponseWriter, r *http.Request) {
 func (a *App) GetBrokerFee(w http.ResponseWriter, r *http.Request) {
 
 	addr := r.URL.Query().Get("addr")
-	fee := a.getBrokerFeeTbps(addr)
+	chainIdStr := r.URL.Query().Get("chain")
+	var chainId int
+	if chainIdStr == "" {
+		chainId = -1
+	} else {
+		var err error
+		chainId, err = strconv.Atoi(chainIdStr)
+		if err != nil {
+			chainId = -1
+		}
+	}
+	fee := a.getBrokerFeeTbps(addr, chainId)
 	res := utils.APIBrokerFeeRes{
 		BrokerFeeTbps: fee,
 	}
@@ -110,7 +121,7 @@ func (a *App) SignOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	slog.Info("Order signature request: trader " + string(req.Order.TraderAddr[0:8]) + "... Perpetual " + strconv.Itoa(int(req.Order.PerpetualId)))
-	req.Order.BrokerFeeTbps = a.getBrokerFeeTbps(req.Order.TraderAddr)
+	req.Order.BrokerFeeTbps = a.getBrokerFeeTbps(req.Order.TraderAddr, int(req.ChainId))
 	jsonResponse, err := pen.GetBrokerOrderSignatureResponse(req.Order, int64(req.ChainId), redis)
 	if err != nil {
 		slog.Error("Error in signature request: " + err.Error())
