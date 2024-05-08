@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -26,23 +27,36 @@ type Vip3Response struct {
 	} `json:"data"`
 }
 
-func (a *App) getBrokerFeeTbps(traderAddr string) uint16 {
+// getBrokerFeeTbps returns the broker fee. traderAddr can be an empty string
+// and chainId can be -1
+func (a *App) getBrokerFeeTbps(traderAddr string, chainId int) uint16 {
 	if a.BrokerFeeLvlsTbps == nil {
 		return a.BrokerFeeTbps
 	}
-	return a.getReducedBrokerFeeTbps(traderAddr)
+	return a.getReducedBrokerFeeTbps(traderAddr, chainId)
 }
 
-func (a *App) getReducedBrokerFeeTbps(traderAddr string) uint16 {
+func (a *App) getReducedBrokerFeeTbps(traderAddr string, chainId int) uint16 {
 	traderAddr = strings.ToLower(traderAddr)
 	l := a.GetVip3Level(traderAddr)
 	if l == 0 {
 		return a.BrokerFeeTbps
 	}
-	if l > len(a.BrokerFeeLvlsTbps) {
-		l = len(a.BrokerFeeLvlsTbps)
+	if chainId == -1 {
+		for key := range a.BrokerFeeLvlsTbps {
+			chainId = key
+			break
+		}
+		fmt.Printf("getReducedBrokerFeeTbps: chainId not specified, defaulting to %d", chainId)
 	}
-	return a.BrokerFeeLvlsTbps[l-1]
+	if _, exits := a.BrokerFeeLvlsTbps[chainId]; !exits {
+		fmt.Printf("getReducedBrokerFeeTbps: chainId %d queried but not specified", chainId)
+		return a.BrokerFeeTbps
+	}
+	if l > len(a.BrokerFeeLvlsTbps[chainId]) {
+		l = len(a.BrokerFeeLvlsTbps[chainId])
+	}
+	return a.BrokerFeeLvlsTbps[chainId][l-1]
 }
 
 // GetVip3Level checks whether for the given address we already have
@@ -97,20 +111,36 @@ func RestGetVip3Level(traderAddr string) (int, error) {
 	return v.Data.Level, nil
 }
 
-func strToFeeArray(feeReduc string, brokerFeeTbps uint16) []uint16 {
-	// Split the string into an array
-	values := strings.Split(feeReduc, ",")
-	if len(values) == 1 {
+func vip3ToFeeMap(feeReduc string, brokerFeeTbps uint16) map[int][]uint16 {
+	// parse string of the form "1101:70,70,70,70;196:70,70,70,70"
+	if feeReduc == "" {
 		return nil
 	}
-	var fees []uint16
-	for _, value := range values {
-		valuePerc, err := strconv.Atoi(value)
-		if err != nil {
-			slog.Error("Error converting value to integer:" + err.Error())
+	chains := strings.Split(feeReduc, ";")
+	reducedFees := make(map[int][]uint16)
+	for _, c := range chains {
+		v := strings.Split(c, ":")
+		if len(v) == 1 {
+			slog.Error("Error parsing VIP3 fees: provide chainId,e.g., 1101:70,70,70,70")
 			return nil
 		}
-		fees = append(fees, uint16((100-valuePerc)*int(brokerFeeTbps)/100))
+		chainId, err := strconv.Atoi(v[0])
+		if err != nil {
+			slog.Error("Error parsing VIP3 chainId to integer:" + err.Error())
+			return nil
+		}
+		var fees []uint16
+
+		feesStr := strings.Split(strings.TrimSuffix(v[1], ";"), ",")
+		for k := 1; k < len(feesStr); k++ {
+			valuePerc, err := strconv.Atoi(feesStr[k])
+			if err != nil {
+				slog.Error("Error converting VIP3 fee to integer:" + err.Error())
+				return nil
+			}
+			fees = append(fees, uint16((100-valuePerc)*int(brokerFeeTbps)/100))
+		}
+		reducedFees[chainId] = fees
 	}
-	return fees
+	return reducedFees
 }
