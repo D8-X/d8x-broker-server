@@ -3,8 +3,8 @@ module github.com/D8-X/d8x-broker-server
 go 1.21
 
 require (
-	github.com/D8-X/d8x-futures-go-sdk v0.5.0 // direct
-	github.com/spf13/viper v1.17.0 // direct
+	github.com/D8-X/d8x-futures-go-sdk v0.5.7 // direct
+	github.com/spf13/viper v1.18.2 // direct
 )
 
 require (
@@ -23,8 +23,8 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
-	github.com/spf13/afero v1.10.0 // indirect
-	github.com/spf13/cast v1.5.1 // indirect
+	github.com/spf13/afero v1.11.0 // indirect
+	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
@@ -47,7 +47,7 @@ require (
 	github.com/ethereum/c-kzg-4844 v0.4.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/redis/rueidis v1.0.21
-	github.com/sagikazarmark/locafero v0.3.0 // indirect
+	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/supranational/blst v0.3.11 // indirect
