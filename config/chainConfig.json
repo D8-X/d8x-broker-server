@@ -10,13 +10,13 @@
     "allowedExecutors": []
   },
   {
-    "chainId": 2442,
-    "name": "cardona",
+    "chainId": 421614,
+    "name": "arbitrumSepolia",
     "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
   },
   {
-    "chainId": 421614,
-    "name": "arbitrumSepolia",
+    "chainId": 42161,
+    "name": "arbitrum",
     "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
   },
   {
