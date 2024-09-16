@@ -48,11 +48,11 @@ func TestSignOrder(t *testing.T) {
 		t.FailNow()
 	}
 	var perpOrder = contracts.IPerpetualOrderOrder{
-		BrokerFeeTbps: 410,
-		TraderAddr:    common.HexToAddress("0x9d5aaB428e98678d0E645ea4AeBd25f744341a05"),
+		BrokerFeeTbps: 40,
+		TraderAddr:    common.HexToAddress("def43cf2dd024abc5447c1dcdc2fe3fe58547b84"),
 		BrokerAddr:    addr,
-		IDeadline:     1691249493,
-		IPerpetualId:  big.NewInt(int64(10001)),
+		IDeadline:     1736876029,
+		IPerpetualId:  big.NewInt(int64(100002)),
 	}
 	digest, sig, err := pen.SignOrder(perpOrder, 42161)
 	if err != nil {
@@ -69,7 +69,8 @@ func TestSignOrder(t *testing.T) {
 		t.Errorf("decoding signature: %v", err)
 		t.FailNow()
 	}
-	fmt.Println("digest = ", digestBytes)
+	fmt.Println("digest = ", digest)
+	fmt.Println("digest bytes = ", digestBytes)
 	addrRecovered, err := d8x_futures.RecoverEvmAddress(digestBytes, sigBytes)
 	v := addrRecovered.String()
 	v0 := addr.String()
