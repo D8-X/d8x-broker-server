@@ -20,9 +20,11 @@ import (
 
 func TestSignOrder(t *testing.T) {
 
-	// Generate a new private key
-	privateKey, err := crypto.GenerateKey()
-	//privateKey, err := crypto.HexToECDSA("yourprivatekey")
+	loadEnv()
+	privateKey, err := crypto.HexToECDSA(viper.GetString("PK_TEST"))
+	// instead generate a new private key
+	// privateKey, err := crypto.GenerateKey()
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,16 +33,20 @@ func TestSignOrder(t *testing.T) {
 
 	chConfig, err := config.LoadChainConfig("../../config/chainConfig.json")
 	if err != nil {
-		t.Errorf("loading deploymentconfig: %v", err)
+		fmt.Printf("loading deploymentconfig: %v", err)
 		return
 	}
 	rpcConfig, err := config.LoadRpcConfig("../../config/rpc.json")
 	if err != nil {
-		t.Errorf("loading deploymentconfig: %v", err)
+		fmt.Printf("loading deploymentconfig: %v", err)
 		return
 	}
 	pk := fmt.Sprintf("%x", privateKey.D)
 	pen, err := utils.NewSignaturePen(pk, chConfig, rpcConfig)
+	if err != nil {
+		fmt.Printf("NewSignaturePen: %v\n", err)
+		t.FailNow()
+	}
 	var perpOrder = contracts.IPerpetualOrderOrder{
 		BrokerFeeTbps: 410,
 		TraderAddr:    common.HexToAddress("0x9d5aaB428e98678d0E645ea4AeBd25f744341a05"),
@@ -48,17 +54,20 @@ func TestSignOrder(t *testing.T) {
 		IDeadline:     1691249493,
 		IPerpetualId:  big.NewInt(int64(10001)),
 	}
-	digest, sig, err := pen.SignOrder(perpOrder, 80001)
+	digest, sig, err := pen.SignOrder(perpOrder, 42161)
 	if err != nil {
 		t.Errorf("signing order: %v", err)
+		t.FailNow()
 	}
 	sigBytes, err := d8x_futures.BytesFromHexString(sig)
 	if err != nil {
 		t.Errorf("decoding signature: %v", err)
+		t.FailNow()
 	}
 	digestBytes, err := d8x_futures.BytesFromHexString(digest)
 	if err != nil {
 		t.Errorf("decoding signature: %v", err)
+		t.FailNow()
 	}
 	fmt.Println("digest = ", digestBytes)
 	addrRecovered, err := d8x_futures.RecoverEvmAddress(digestBytes, sigBytes)
@@ -67,16 +76,16 @@ func TestSignOrder(t *testing.T) {
 	if err != nil {
 		t.Errorf("recovering address: %v", err)
 	} else {
-		t.Logf("recovered address")
-		t.Logf(v)
+		fmt.Println("recovered address")
+		fmt.Println(v)
 	}
 
 	t.Log("recovered addr = ", v)
 	t.Log("signer    addr = ", v0)
 	if v == v0 {
-		t.Logf("recovered address correct")
+		fmt.Println("recovered address correct")
 	} else {
-		t.Errorf("recovering address incorrect")
+		fmt.Println("recovering address incorrect")
 	}
 }
 

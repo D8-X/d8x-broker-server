@@ -22,5 +22,9 @@
     {
         "chainId": 80085,
         "HTTP": ["https://artio.rpc.berachain.com"]
+    },
+    {
+        "chainId": 42161,
+        "HTTP": ["https://arbitrum.llamarpc.com"]
     }
 ]

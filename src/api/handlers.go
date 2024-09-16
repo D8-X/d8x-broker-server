@@ -120,7 +120,13 @@ func (a *App) SignOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, string(formatError(err.Error())), http.StatusBadRequest)
 		return
 	}
-	slog.Info("Order signature request: trader " + string(req.Order.TraderAddr[0:8]) + "... Perpetual " + strconv.Itoa(int(req.Order.PerpetualId)))
+	slog.Info(fmt.Sprintf("Order signature request: trader %s... Perpetual %d Chain %d broker %s... deadline %d fee Tbps %d",
+		string(req.Order.TraderAddr[0:8]),
+		int(req.Order.PerpetualId),
+		int(req.ChainId),
+		string(req.Order.BrokerAddr[0:8]),
+		int(req.Order.Deadline),
+		int(req.Order.BrokerFeeTbps)))
 	req.Order.BrokerFeeTbps = a.getBrokerFeeTbps(req.Order.TraderAddr, int(req.ChainId))
 	jsonResponse, err := pen.GetBrokerOrderSignatureResponse(req.Order, int64(req.ChainId), redis)
 	if err != nil {
