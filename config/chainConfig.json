@@ -7,7 +7,7 @@
   {
     "chainId": 1101,
     "name": "zkEVM Mainnet",
-    "allowedExecutors": []
+    "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
   },
   {
     "chainId": 421614,
