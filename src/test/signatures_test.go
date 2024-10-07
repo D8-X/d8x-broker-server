@@ -47,18 +47,20 @@ func TestSignOrder(t *testing.T) {
 		fmt.Printf("NewSignaturePen: %v\n", err)
 		t.FailNow()
 	}
+	fmt.Printf("broker = %s\n", addr.String())
 	var perpOrder = contracts.IPerpetualOrderOrder{
 		BrokerFeeTbps: 40,
 		TraderAddr:    common.HexToAddress("def43cf2dd024abc5447c1dcdc2fe3fe58547b84"),
 		BrokerAddr:    addr,
-		IDeadline:     1736876029,
-		IPerpetualId:  big.NewInt(int64(100002)),
+		IDeadline:     1731002664,
+		IPerpetualId:  big.NewInt(int64(100001)),
 	}
-	digest, sig, err := pen.SignOrder(perpOrder, 42161)
+	digest, sig, err := pen.SignOrder(perpOrder, 1101)
 	if err != nil {
 		t.Errorf("signing order: %v", err)
 		t.FailNow()
 	}
+	fmt.Printf("\nsignature = %s\n", sig)
 	sigBytes, err := d8x_futures.BytesFromHexString(sig)
 	if err != nil {
 		t.Errorf("decoding signature: %v", err)
