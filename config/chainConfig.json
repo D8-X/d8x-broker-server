@@ -23,5 +23,10 @@
     "chainId": 80085,
     "name": "artio",
     "allowedExecutors": []
+  },
+  {
+    "chainId": 8453,
+    "name": "base",
+    "allowedExecutors": []
   }
 ]
