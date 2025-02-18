@@ -24,6 +24,10 @@
         "HTTP": ["https://artio.rpc.berachain.com"]
     },
     {
+        "chainId": 80095,
+        "HTTP": ["https://rpc.berachain.com", "https://berachain-rpc.publicnode.com", "https://berachain.drpc.org"]
+    },
+    {
         "chainId": 42161,
         "HTTP": ["https://arbitrum.llamarpc.com"]
     },
