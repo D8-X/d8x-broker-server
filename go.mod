@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
-	github.com/D8-X/d8x-futures-go-sdk v1.0.29 // direct
+	github.com/D8-X/d8x-futures-go-sdk v1.1.2 // direct
 	github.com/spf13/viper v1.18.2 // direct
 )
 
