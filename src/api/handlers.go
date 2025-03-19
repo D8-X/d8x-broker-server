@@ -36,12 +36,16 @@ func (a *App) GetChainConfig(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
-func (a *App) GetBrokerAddress(w http.ResponseWriter, r *http.Request) {
-	var brokerAddr string
-	for _, v := range a.Pen.Wallets {
-		brokerAddr = v.Address.String()
-		break
+func (a *App) BrokerAddress() string {
+	// same address for all chains
+	for _, wallet := range a.Pen.Wallets {
+		return wallet.Address.Hex()
 	}
+	return ""
+}
+
+func (a *App) GetBrokerAddress(w http.ResponseWriter, r *http.Request) {
+	brokerAddr := a.BrokerAddress()
 	response := struct {
 		BrokerAddr string `json:"brokerAddr"`
 	}{
@@ -114,6 +118,9 @@ func (a *App) SignOrder(w http.ResponseWriter, r *http.Request) {
 		errMsg = strings.ReplaceAll(errMsg, "\n", "")
 		http.Error(w, string(formatError(errMsg)), http.StatusBadRequest)
 		return
+	}
+	if req.Order.BrokerAddr == (common.Address{}).String() || len(req.Order.BrokerAddr) != len((common.Address{})) {
+		req.Order.BrokerAddr = a.BrokerAddress()
 	}
 	err = req.CheckData()
 	if err != nil {
