@@ -16,7 +16,7 @@ var upgrader = websocket.Upgrader{}
 
 // Initialize server with empty subscription
 var server = NewServer()
-var config []utils.ChainConfig
+var config map[int64]utils.ChainConfig
 
 const (
 	// time to read the next client's pong message
@@ -29,7 +29,7 @@ const (
 	maxMessageSize = 512
 )
 
-func StartWSServer(config_ []utils.ChainConfig, WS_ADDR string, REDIS_ADDR string, REDIS_PWD string) error {
+func StartWSServer(config_ map[int64]utils.ChainConfig, WS_ADDR string, REDIS_ADDR string, REDIS_PWD string) error {
 	config = config_
 	client, err := rueidis.NewClient(
 		rueidis.ClientOption{InitAddress: []string{REDIS_ADDR}, Password: REDIS_PWD})

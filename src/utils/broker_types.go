@@ -10,11 +10,14 @@ import (
 	"github.com/redis/rueidis"
 )
 
+// chain config based on data from config file
+// and sdk
 type ChainConfig struct {
 	ChainId           int64
 	Name              string
 	AllowedExecutors  []common.Address
 	MultiPayCtrctAddr common.Address
+	ProxyAddr         common.Address
 }
 
 type ChainConfigFile struct {

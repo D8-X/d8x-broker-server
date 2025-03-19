@@ -29,26 +29,16 @@ type SignaturePen struct {
 	Wallets     map[int64]*d8x_futures.Wallet
 }
 
-func NewSignaturePen(privateKeyHex string, chConf []ChainConfig, rpcConf []RpcConfig) (SignaturePen, error) {
+func NewSignaturePen(privateKeyHex string, chConf map[int64]ChainConfig, rpcConf []RpcConfig) (SignaturePen, error) {
 
-	activeChains := make(map[int64]bool, len(chConf))
-	for _, conf := range chConf {
-		if len(conf.AllowedExecutors) > 0 {
-			// we have executors whitelisted, so we activate the chain
-			activeChains[conf.ChainId] = true
-		}
-	}
-	if len(activeChains) == 0 {
-		return SignaturePen{}, errors.New("specify allowed executors")
-	}
-	rpcMap := createRpcConfigMap(rpcConf, activeChains)
+	rpcMap := createRpcConfigMap(rpcConf, chConf)
 
-	wallets, err := createWalletMap(chConf, activeChains, privateKeyHex, rpcMap)
+	wallets, err := createWalletMap(chConf, privateKeyHex, rpcMap)
 	if err != nil {
 		return SignaturePen{}, err
 	}
 	pen := SignaturePen{
-		ChainConfig: createChainConfigMap(chConf, activeChains),
+		ChainConfig: chConf,
 		RpcUrl:      rpcMap,
 		Wallets:     wallets,
 	}
@@ -66,8 +56,7 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 	}
 	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
 	if !strings.EqualFold(ctrct.Hex(), ps.Payment.MultiPayCtrct.Hex()) {
-		msg := fmt.Sprintf("multipay ctrct mismatch, expected: %s got: %s on chain %d", ctrct.String(), ps.Payment.MultiPayCtrct.Hex(), ps.Payment.ChainId)
-		return common.Address{}, fmt.Errorf(msg)
+		return common.Address{}, fmt.Errorf("multipay ctrct mismatch, expected: %s got: %s on chain %d", ctrct.String(), ps.Payment.MultiPayCtrct.Hex(), ps.Payment.ChainId)
 	}
 	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sig, &ps.Payment)
 	if err != nil {
@@ -108,7 +97,11 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 		IDeadline:     order.Deadline,
 		IPerpetualId:  big.NewInt(int64(order.PerpetualId)),
 	}
-	_, sig, err := p.SignOrder(perpOrder, chainId)
+	chainConfig, exists := p.ChainConfig[chainId]
+	if !exists {
+		return nil, fmt.Errorf("chain config not defined for chain %d", chainId)
+	}
+	_, sig, err := p.SignOrder(perpOrder, chainConfig.ProxyAddr, chainId)
 	if err != nil {
 		return nil, err
 	}
@@ -183,16 +176,7 @@ func (p *SignaturePen) createOrderDigest(order APIOrderSig, chainId int64) (stri
 	return d, orderId, nil
 }
 
-func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, chainId int64) (string, string, error) {
-	//
-	c, err := config.GetDefaultChainConfigFromId(chainId)
-	if err != nil {
-		msg := fmt.Sprintf("Could not find chain config for id %d: %s", chainId, err.Error())
-		slog.Error(msg)
-		return "", "", err
-	}
-
-	proxyAddr := c.ProxyAddr
+func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, proxyAddr common.Address, chainId int64) (string, string, error) {
 	wallet := p.Wallets[chainId]
 	if wallet == nil || wallet.PrivateKey == nil {
 		return "", "", fmt.Errorf("no broker key defined for chain %d", chainId)
@@ -205,47 +189,32 @@ func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, chainId i
 	return digest, sig, err
 }
 
-func createChainConfigMap(configList []ChainConfig, activeChains map[int64]bool) map[int64]ChainConfig {
-	config := make(map[int64]ChainConfig)
-	for _, c := range configList {
-		if _, exists := activeChains[c.ChainId]; exists {
-			slog.Info("Chain config for chain " + strconv.Itoa(int(c.ChainId)))
-			config[c.ChainId] = c
-		}
-	}
-	return config
-}
-
-func createRpcConfigMap(configList []RpcConfig, activeChains map[int64]bool) map[int64][]string {
+func createRpcConfigMap(configList []RpcConfig, chainConfig map[int64]ChainConfig) map[int64][]string {
 	config := make(map[int64][]string)
 	for _, c := range configList {
-		if _, exists := activeChains[c.ChainId]; exists {
+		if _, exists := chainConfig[c.ChainId]; exists {
 			config[c.ChainId] = c.Rpc
 		}
 	}
 	return config
 }
 
-func createWalletMap(configList []ChainConfig, activeChains map[int64]bool, privateKeyHex string, rpcUrlMap map[int64][]string) (map[int64]*d8x_futures.Wallet, error) {
+func createWalletMap(chainConfig map[int64]ChainConfig, privateKeyHex string, rpcUrlMap map[int64][]string) (map[int64]*d8x_futures.Wallet, error) {
 	walletMap := make(map[int64]*d8x_futures.Wallet)
-	for _, c := range configList {
-		if _, exists := activeChains[c.ChainId]; !exists {
-			continue
-		}
-		rpcUrls := rpcUrlMap[c.ChainId]
+	for chainId := range chainConfig {
+		rpcUrls := rpcUrlMap[chainId]
 		if len(rpcUrls) == 0 {
-			msg := fmt.Sprintf("createWalletMap could not find RPC url for chain ID %d", c.ChainId)
-			return nil, errors.New(msg)
+			return nil, fmt.Errorf("createWalletMap could not find RPC url for chain ID %d", chainId)
 		}
 		client, err := CreateRpcClient(rpcUrls)
 		if err != nil {
 			return nil, fmt.Errorf("createWalletMap:" + err.Error())
 		}
-		wallet, err := d8x_futures.NewWallet(privateKeyHex, c.ChainId, client)
+		wallet, err := d8x_futures.NewWallet(privateKeyHex, chainId, client)
 		if err != nil {
 			return nil, fmt.Errorf("error casting public key to ECDSA:" + err.Error())
 		}
-		walletMap[c.ChainId] = wallet
+		walletMap[chainId] = wallet
 	}
 	return walletMap, nil
 }
