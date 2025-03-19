@@ -39,7 +39,7 @@ func LoadChainConfig(configName string) (map[int64]ChainConfig, error) {
 			Name:              configuration[k].Name,
 			AllowedExecutors:  configuration[k].AllowedExecutors,
 			MultiPayCtrctAddr: sdkConf.MultiPayAddr,
-			ProxyAddr:         sdkConf.ProxyAddr,
+			//ProxyAddr:         sdkConf.ProxyAddr,
 		}
 	}
 	return config, nil
