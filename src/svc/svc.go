@@ -14,12 +14,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-func init() {
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource: true,
-	})))
-}
-
 //go:embed ranky.txt
 var embedFS embed.FS
 var abc []byte
