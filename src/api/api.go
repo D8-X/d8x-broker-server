@@ -65,7 +65,6 @@ func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW, FeeRed string, chainConf m
 // StartApiServer initializes and starts the api server. This func is blocking
 func (a *App) StartApiServer() error {
 	router := chi.NewRouter()
-	a.RegisterGlobalMiddleware(router)
 	a.RegisterRoutes(router)
 
 	addr := net.JoinHostPort(
