@@ -51,8 +51,8 @@ func TestSignOrder(t *testing.T) {
 		BrokerFeeTbps: 40,
 		TraderAddr:    common.HexToAddress("def43cf2dd024abc5447c1dcdc2fe3fe58547b84"),
 		BrokerAddr:    addr,
-		IDeadline:     1731002664,
-		IPerpetualId:  big.NewInt(int64(100001)),
+		IDeadline:     1743101927,
+		IPerpetualId:  big.NewInt(int64(100000)),
 	}
 	digest, sig, err := pen.SignOrder(perpOrder, chConfig[80094].ProxyAddr, 80094)
 	if err != nil {
