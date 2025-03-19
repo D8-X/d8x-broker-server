@@ -33,8 +33,8 @@ type App struct {
 	TokenApprovalTs   map[string]int64
 }
 
-func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW, FeeRed string, chConf []utils.ChainConfig, rpcConf []utils.RpcConfig, feeTbps uint16) (*App, error) {
-	pen, err := utils.NewSignaturePen(pk, chConf, rpcConf)
+func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW, FeeRed string, chainConf map[int64]utils.ChainConfig, rpcConf []utils.RpcConfig, feeTbps uint16) (*App, error) {
+	pen, err := utils.NewSignaturePen(pk, chainConf, rpcConf)
 	if err != nil {
 		return nil, errors.New("Unable to create signature pen:" + err.Error())
 	}
@@ -65,7 +65,6 @@ func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW, FeeRed string, chConf []ut
 // StartApiServer initializes and starts the api server. This func is blocking
 func (a *App) StartApiServer() error {
 	router := chi.NewRouter()
-	a.RegisterGlobalMiddleware(router)
 	a.RegisterRoutes(router)
 
 	addr := net.JoinHostPort(
@@ -86,38 +85,38 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	now := time.Now().Unix()
 	if now-a.TokenApprovalTs[key] < APPROVAL_EXPIRY_SEC {
 		// already approved
-		slog.Info("Token already approved for chain.tkn=" + key)
+		slog.Info("token already approved for chain.tkn=" + key)
 		return nil
 	}
 	config := a.Pen.ChainConfig[chainId]
 	rpcUrls := a.Pen.RpcUrl[chainId]
 	if len(rpcUrls) == 0 {
-		return errors.New("No rpc url defined for chain " + strconv.Itoa(int(chainId)))
+		return errors.New("no rpc url defined for chain " + strconv.Itoa(int(chainId)))
 	}
 	client, err := utils.CreateRpcClient(rpcUrls)
 	if err != nil {
-		return errors.New("Error creating rpc cliet for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
+		return errors.New("creating rpc cliet for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
 	}
 	defer client.Close()
 
 	tknInstance, err := contracts.NewErc20(tokenAddr, client)
 	if err != nil {
-		return errors.New("Error creating token instance " + tokenAddr.String() + " for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
+		return errors.New("creating token instance " + tokenAddr.String() + " for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
 	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(a.Pen.Wallets[chainId].PrivateKey, chainIdBI)
 	if err != nil {
-		return errors.New("Error creating NewKeyedTransactorWithChainID for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
+		return errors.New("creating NewKeyedTransactorWithChainID for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
 	}
 	nonce, err := getNonce(client, a.Pen.Wallets[chainId].Address)
 	if err != nil {
-		return errors.New("Error getting nonce for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
+		return errors.New("getting nonce for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = 0 //estimate
 	g, err := d8x_futures.GetGasPrice(client)
 	if err != nil {
-		slog.Error("Could not get gas price:" + err.Error())
+		slog.Error("could not get gas price:" + err.Error())
 		return err
 	}
 	// mark up gas price
@@ -126,7 +125,7 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 	auth.GasPrice = g
 	approvalTx, err := tknInstance.Approve(auth, config.MultiPayCtrctAddr, getMaxUint256())
 	if err != nil {
-		return errors.New("Error approving token for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
+		return errors.New("approving token for chain " + strconv.Itoa(int(chainId)) + ": " + err.Error())
 	}
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(context.Background(), client, approvalTx)
