@@ -1,4 +1,4 @@
-package test
+package utils
 
 import (
 	"crypto/ecdsa"
@@ -8,9 +8,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/D8-X/d8x-broker-server/src/config"
 	"github.com/D8-X/d8x-broker-server/src/env"
-	"github.com/D8-X/d8x-broker-server/src/utils"
+
 	"github.com/D8-X/d8x-futures-go-sdk/pkg/contracts"
 	"github.com/D8-X/d8x-futures-go-sdk/pkg/d8x_futures"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,18 +30,18 @@ func TestSignOrder(t *testing.T) {
 	// Derive the Ethereum address from the private key
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	chConfig, err := config.LoadChainConfig("../../config/chainConfig.json")
+	chConfig, err := LoadChainConfig("../../config/chainConfig.json")
 	if err != nil {
 		fmt.Printf("loading deploymentconfig: %v", err)
 		return
 	}
-	rpcConfig, err := config.LoadRpcConfig("../../config/rpc.json")
+	rpcConfig, err := LoadRpcConfig("../../config/rpc.json")
 	if err != nil {
 		fmt.Printf("loading deploymentconfig: %v", err)
 		return
 	}
 	pk := fmt.Sprintf("%x", privateKey.D)
-	pen, err := utils.NewSignaturePen(pk, chConfig, rpcConfig)
+	pen, err := NewSignaturePen(pk, chConfig, rpcConfig)
 	if err != nil {
 		fmt.Printf("NewSignaturePen: %v\n", err)
 		t.FailNow()
@@ -55,7 +54,7 @@ func TestSignOrder(t *testing.T) {
 		IDeadline:     1731002664,
 		IPerpetualId:  big.NewInt(int64(100001)),
 	}
-	digest, sig, err := pen.SignOrder(perpOrder, 1101)
+	digest, sig, err := pen.SignOrder(perpOrder, chConfig[80094].ProxyAddr, 80094)
 	if err != nil {
 		t.Errorf("signing order: %v", err)
 		t.FailNow()
@@ -104,17 +103,6 @@ func generateKey() (common.Address, *ecdsa.PrivateKey, error) {
 	return addr, privateKey, err
 }
 
-func getAddrPkFromString(pk string) (common.Address, *ecdsa.PrivateKey, error) {
-	// Generate a new private key
-	privateKey, err := crypto.HexToECDSA(pk)
-	if err != nil {
-		return common.Address{}, privateKey, err
-	}
-	// Derive the Ethereum address from the private key
-	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
-	return addr, privateKey, nil
-}
-
 func TestSignPayment(t *testing.T) {
 	brokerAddr, brokerPk, err := generateKey()
 	//brokerAddr, brokerPk, err := getAddrPkFromString("key")
@@ -149,24 +137,31 @@ func TestSignPayment(t *testing.T) {
 		t.Errorf("error creating wallet")
 	}
 	_, sg, err := d8x_futures.RawCreatePaymentBrokerSignature(&summary, execWallet)
-
+	if err != nil {
+		fmt.Println(err.Error())
+		t.FailNow()
+	}
 	data := d8x_futures.BrokerPaySignatureReq{
 		Payment:           summary,
 		ExecutorSignature: sg,
 	}
 	fmt.Println(data)
-	chConfig, err := config.LoadChainConfig("../../config/chainConfig.json")
+	chConfig, err := LoadChainConfig("../../config/chainConfig.json")
 	if err != nil {
 		t.Errorf("loading deploymentconfig: %v", err)
 		return
 	}
-	rpcConfig, err := config.LoadRpcConfig("../../config/rpc.json")
+	rpcConfig, err := LoadRpcConfig("../../config/rpc.json")
 	if err != nil {
 		t.Errorf("loading deploymentconfig: %v", err)
 		return
 	}
 	pkBrker := fmt.Sprintf("%x", brokerPk.D)
-	pen, err := utils.NewSignaturePen(pkBrker, chConfig, rpcConfig)
+	pen, err := NewSignaturePen(pkBrker, chConfig, rpcConfig)
+	if err != nil {
+		fmt.Println(err.Error())
+		t.FailNow()
+	}
 	jsonRes, err := pen.GetBrokerPaymentSignatureResponse(data)
 	if err != nil {
 		t.Errorf("GetBrokerPaymentSignatureResponse: %v", err)
@@ -204,7 +199,7 @@ func loadEnv() {
 	viper.SetConfigFile("../../.env")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("could not load .env file")
-		log.Fatalf(err.Error())
+		return
 	}
 
 	viper.SetDefault(env.API_BIND_ADDR, "")
@@ -217,7 +212,7 @@ func loadEnv() {
 	for _, e := range requiredEnvs {
 		if !viper.IsSet(e) {
 			log.Fatalf("required environment variable not set variable")
-			log.Fatalf(e)
+			return
 		}
 	}
 }

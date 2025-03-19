@@ -1,17 +1,7 @@
 [
   {
-    "chainId": 195,
-    "name": "x1",
-    "allowedExecutors": []
-  },
-  {
     "chainId": 1101,
     "name": "zkEVM Mainnet",
-    "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
-  },
-  {
-    "chainId": 421614,
-    "name": "arbitrumSepolia",
     "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
   },
   {
@@ -20,13 +10,13 @@
     "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
   },
   {
-    "chainId": 80085,
-    "name": "artio",
-    "allowedExecutors": []
+    "chainId": 80094,
+    "name": "bera",
+    "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
   },
   {
     "chainId": 8453,
     "name": "base",
-    "allowedExecutors": []
+    "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
   }
 ]

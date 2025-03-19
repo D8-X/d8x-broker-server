@@ -9,8 +9,6 @@ import (
 
 	"github.com/D8-X/d8x-broker-server/src/utils"
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/D8-X/d8x-broker-server/src/config"
 )
 
 func TestApproveTokenAmount(t *testing.T) {
@@ -21,16 +19,15 @@ func TestApproveTokenAmount(t *testing.T) {
 		fmt.Printf("Private key not set in environment (export PK)")
 		t.FailNow()
 	}
-	chConf, err := config.LoadChainConfig(CONFIG_PATH)
+	chConf, err := utils.LoadChainConfig(CONFIG_PATH)
 	if err != nil {
 		slog.Error("loading chain config: " + err.Error())
-		return
+		t.FailNow()
 	}
-	rpcConf, err := config.LoadRpcConfig(CONFIG_RPC_PATH)
+	rpcConf, err := utils.LoadRpcConfig(CONFIG_RPC_PATH)
 	if err != nil {
 		slog.Error("loading rpc config: " + err.Error())
-		t.Fail()
-		return
+		t.FailNow()
 	}
 	pen, err := utils.NewSignaturePen(pk, chConf, rpcConf)
 	if err != nil {

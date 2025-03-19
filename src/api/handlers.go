@@ -128,6 +128,7 @@ func (a *App) SignOrder(w http.ResponseWriter, r *http.Request) {
 		int(req.Order.Deadline),
 		int(req.Order.BrokerFeeTbps)))
 	req.Order.BrokerFeeTbps = a.getBrokerFeeTbps(req.Order.TraderAddr, int(req.ChainId))
+
 	jsonResponse, err := pen.GetBrokerOrderSignatureResponse(req.Order, int64(req.ChainId), redis)
 	if err != nil {
 		slog.Error("Error in signature request: " + err.Error())

@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/D8-X/d8x-broker-server/src/api"
-	"github.com/D8-X/d8x-broker-server/src/config"
 	"github.com/D8-X/d8x-broker-server/src/env"
 	"github.com/D8-X/d8x-broker-server/src/executorws"
 	"github.com/D8-X/d8x-broker-server/src/utils"
@@ -42,7 +41,7 @@ func RunExecutorWs() {
 		slog.Error("loading env: " + err.Error())
 		return
 	}
-	config, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
+	config, err := utils.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
 		slog.Error("loading chain config: " + err.Error())
 		return
@@ -73,13 +72,13 @@ func RunBroker() {
 	}
 
 	fmt.Println("Loading config file from " + viper.GetString(env.CONFIG_PATH))
-	chConf, err := config.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
+	chConf, err := utils.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
 		slog.Error("loading chain config: " + err.Error())
 		return
 	}
 	fmt.Println("Loading rpc config file from " + viper.GetString(env.CONFIG_RPC_PATH))
-	rpcConf, err := config.LoadRpcConfig(viper.GetString(env.CONFIG_RPC_PATH))
+	rpcConf, err := utils.LoadRpcConfig(viper.GetString(env.CONFIG_RPC_PATH))
 	if err != nil {
 		slog.Error("loading rpc config: " + err.Error())
 		return

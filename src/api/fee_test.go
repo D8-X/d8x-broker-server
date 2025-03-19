@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/D8-X/d8x-broker-server/src/config"
+	"github.com/D8-X/d8x-broker-server/src/utils"
 )
 
 func TestRestGetVip3Level(t *testing.T) {
@@ -25,12 +25,12 @@ func TestRestGetVip3Level(t *testing.T) {
 }
 
 func TestGetVip3Level(t *testing.T) {
-	chConf, err := config.LoadChainConfig("../../config/chainConfig.json")
+	chConf, err := utils.LoadChainConfig("../../config/chainConfig.json")
 	if err != nil {
 		slog.Error("loading chain config: " + err.Error())
 		return
 	}
-	rpcConf, err := config.LoadRpcConfig("../../config/rpc.json")
+	rpcConf, err := utils.LoadRpcConfig("../../config/rpc.json")
 	if err != nil {
 		slog.Error("loading rpc config: " + err.Error())
 		return
@@ -65,8 +65,8 @@ func TestGetVip3Level(t *testing.T) {
 }
 
 func TestGetBrokerFeeTbps(t *testing.T) {
-	chConf, _ := config.LoadChainConfig("../../config/chainConfig.json")
-	rpcConf, _ := config.LoadRpcConfig("../../config/rpc.json")
+	chConf, _ := utils.LoadChainConfig("../../config/chainConfig.json")
+	rpcConf, _ := utils.LoadRpcConfig("../../config/rpc.json")
 	conf := "1101:50,75,90"
 	//conf := ""
 	a, err := NewApp(
