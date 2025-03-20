@@ -101,6 +101,9 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 	if !exists {
 		return nil, fmt.Errorf("chain config not defined for chain %d", chainId)
 	}
+	if chainConfig.ProxyAddr == (common.Address{}) {
+		return nil, fmt.Errorf("proxy address not defined in chain config for chain %d", chainId)
+	}
 	_, sig, err := p.SignOrder(perpOrder, chainConfig.ProxyAddr, chainId)
 	if err != nil {
 		return nil, err
