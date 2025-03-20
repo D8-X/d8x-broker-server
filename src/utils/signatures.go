@@ -119,6 +119,7 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 	if err != nil {
 		return []byte{}, errors.New("decoding signature: " + err.Error())
 	}
+	slog.Info("result", "orderId", orderId, "sig", sig)
 	res := APIBrokerSignatureRes{
 		Order:           order,
 		ChainId:         chainId,
@@ -195,7 +196,6 @@ func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, proxyAddr
 	digest, sig, err := d8x_futures.RawCreateOrderBrokerSignature(
 		proxyAddr, chainId, wallet, int32(order.IPerpetualId.Int64()), uint32(order.BrokerFeeTbps),
 		order.TraderAddr.String(), order.IDeadline)
-
 	return digest, sig, err
 }
 
