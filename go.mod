@@ -1,8 +1,6 @@
 module github.com/D8-X/d8x-broker-server
 
-go 1.22.0
-
-toolchain go1.22.2
+go 1.22.2
 
 require (
 	github.com/D8-X/d8x-futures-go-sdk v1.1.2 // direct
