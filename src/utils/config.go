@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 
 	d8x_config "github.com/D8-X/d8x-futures-go-sdk/config"
@@ -31,6 +32,7 @@ func LoadChainConfig(configName string) (map[int64]ChainConfig, error) {
 			// we have no executors whitelisted
 			continue
 		}
+		slog.Info("loading config for chain", "chainId", configuration[k].ChainId)
 		sdkConf, err := d8x_config.GetDefaultChainConfigFromId(configuration[k].ChainId)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find sdk chain config for chain %d", configuration[k].ChainId)
@@ -46,7 +48,7 @@ func LoadChainConfig(configName string) (map[int64]ChainConfig, error) {
 			Name:              configuration[k].Name,
 			AllowedExecutors:  configuration[k].AllowedExecutors,
 			MultiPayCtrctAddr: sdkConf.MultiPayAddr,
-			//ProxyAddr:         sdkConf.ProxyAddr,
+			ProxyAddr:         sdkConf.ProxyAddr,
 		}
 	}
 	return config, nil
