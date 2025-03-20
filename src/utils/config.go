@@ -7,6 +7,7 @@ import (
 	"os"
 
 	d8x_config "github.com/D8-X/d8x-futures-go-sdk/config"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // load configuration json with deployment addresses: "config/chainConfig.json"
@@ -25,7 +26,7 @@ func LoadChainConfig(configName string) (map[int64]ChainConfig, error) {
 		return nil, err
 	}
 	config := make(map[int64]ChainConfig)
-	for k := 0; k < len(configuration); k++ {
+	for k := range configuration {
 		if len(configuration[k].AllowedExecutors) == 0 {
 			// we have no executors whitelisted
 			continue
@@ -33,6 +34,12 @@ func LoadChainConfig(configName string) (map[int64]ChainConfig, error) {
 		sdkConf, err := d8x_config.GetDefaultChainConfigFromId(configuration[k].ChainId)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find sdk chain config for chain %d", configuration[k].ChainId)
+		}
+		if sdkConf.MultiPayAddr == (common.Address{}) {
+			return nil, fmt.Errorf("no multipay addr defined in sdk chain config for chain %d", configuration[k].ChainId)
+		}
+		if sdkConf.ProxyAddr == (common.Address{}) {
+			return nil, fmt.Errorf("no proxy defined in sdk chain config for chain %d", configuration[k].ChainId)
 		}
 		config[configuration[k].ChainId] = ChainConfig{
 			ChainId:           configuration[k].ChainId,
