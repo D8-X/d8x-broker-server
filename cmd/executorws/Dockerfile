@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.22.2
 ARG BUILD_VERSION
 WORKDIR /broker
 COPY . . 
