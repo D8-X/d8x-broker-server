@@ -97,6 +97,9 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 		IDeadline:     order.Deadline,
 		IPerpetualId:  big.NewInt(int64(order.PerpetualId)),
 	}
+	fmt.Println("data to sign")
+	fmt.Println(perpOrder)
+	fmt.Println("----")
 	chainConfig, exists := p.ChainConfig[chainId]
 	if !exists {
 		return nil, fmt.Errorf("chain config not defined for chain %d", chainId)
@@ -181,6 +184,7 @@ func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, proxyAddr
 	if wallet == nil || wallet.PrivateKey == nil {
 		return "", "", fmt.Errorf("no broker key defined for chain %d", chainId)
 	}
+	fmt.Printf("broker wallet pub key for %d sig = %v, %v", chainId, wallet.Address.Hex(), wallet.PrivateKey.PublicKey)
 	digest, sig, err := d8x_futures.RawCreateOrderBrokerSignature(
 		proxyAddr, chainId, wallet, int32(order.IPerpetualId.Int64()), uint32(order.BrokerFeeTbps),
 		order.TraderAddr.String(), order.IDeadline)
