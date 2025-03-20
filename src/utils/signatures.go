@@ -181,8 +181,8 @@ func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, proxyAddr
 	if wallet == nil || wallet.PrivateKey == nil {
 		return "", "", fmt.Errorf("no broker key defined for chain %d", chainId)
 	}
-	fmt.Printf("data to sign:\n%d %d %d %s %d\n",
-		chainId, int32(order.IPerpetualId.Uint64()), uint32(order.BrokerFeeTbps), order.TraderAddr.String(), order.IDeadline)
+	fmt.Printf("data to sign:\n%d %d %d %s %d %s\n",
+		chainId, int32(order.IPerpetualId.Uint64()), uint32(order.BrokerFeeTbps), order.TraderAddr.String(), order.IDeadline, proxyAddr)
 	digest, sig, err := d8x_futures.RawCreateOrderBrokerSignature(
 		proxyAddr, chainId, wallet, int32(order.IPerpetualId.Int64()), uint32(order.BrokerFeeTbps),
 		order.TraderAddr.String(), order.IDeadline)
