@@ -119,7 +119,7 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 	if err != nil {
 		return []byte{}, errors.New("decoding signature: " + err.Error())
 	}
-	slog.Info("result", "orderId", orderId, "sig", sig)
+	slog.Info("result", "orderId", orderId, "orderDigest", digest, "sig", sig)
 	res := APIBrokerSignatureRes{
 		Order:           order,
 		ChainId:         chainId,
