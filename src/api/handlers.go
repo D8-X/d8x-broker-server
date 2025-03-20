@@ -119,9 +119,9 @@ func (a *App) SignOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, string(formatError(errMsg)), http.StatusBadRequest)
 		return
 	}
-	//if req.Order.BrokerAddr == (common.Address{}).String() || len(req.Order.BrokerAddr) != len((common.Address{})) {
-	//	req.Order.BrokerAddr = a.BrokerAddress()
-	//}
+	if req.Order.BrokerAddr == (common.Address{}).String() || len(req.Order.BrokerAddr) != len((common.Address{})) {
+		req.Order.BrokerAddr = a.BrokerAddress()
+	}
 	err = req.CheckData()
 	if err != nil {
 		http.Error(w, string(formatError(err.Error())), http.StatusBadRequest)
