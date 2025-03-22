@@ -15,7 +15,7 @@ services:
       BROKER_FEE_TBPS: "${BROKER_FEE_TBPS}"
       REDIS_ADDR: "${REDIS_ADDR}"
       REDIS_PW: "${REDIS_PW}"
-      CONFIG_PATH: /chain_config
+      CONFIG_PATH: /broker_config
       CONFIG_RPC_PATH: /rpc_config
       KEYFILE_PATH: /keyfile/
     logging:
@@ -23,7 +23,7 @@ services:
         max-size: "10m"
         max-file: "10"
     configs:
-      - chain_config
+      - broker_config
       - rpc_config
     volumes:
       - keyvol:/keyfile
@@ -45,13 +45,13 @@ services:
       REDIS_PW: "${REDIS_PW}"
       WS_ADDR: "${WS_ADDR}"
       BROKER_FEE_TBPS: "${BROKER_FEE_TBPS}"
-      CONFIG_PATH: /chain_config
+      CONFIG_PATH: /broker_config
     logging:
       options:
         max-size: "10m"
         max-file: "10"
     configs:
-      - chain_config
+      - broker_config
 
   redis:
     image: redis
@@ -72,8 +72,8 @@ networks:
   app-net:
 
 configs:
-  chain_config:
-    file: ./config/chainConfig.json
+  broker_config:
+    file: ./config/brokerConfig.json
   rpc_config:
     file: ./config/rpc.json
 volumes:

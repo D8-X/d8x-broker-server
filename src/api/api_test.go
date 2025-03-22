@@ -19,7 +19,7 @@ func TestApproveTokenAmount(t *testing.T) {
 		fmt.Printf("Private key not set in environment (export PK)")
 		t.FailNow()
 	}
-	chConf, err := utils.LoadChainConfig(CONFIG_PATH)
+	chConf, err := utils.LoadBrokerConfig(CONFIG_PATH)
 	if err != nil {
 		slog.Error("loading chain config: " + err.Error())
 		t.FailNow()

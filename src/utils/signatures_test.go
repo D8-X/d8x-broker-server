@@ -30,7 +30,7 @@ func TestSignOrder(t *testing.T) {
 	// Derive the Ethereum address from the private key
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	chConfig, err := LoadChainConfig("../../config/chainConfig.json")
+	chConfig, err := LoadBrokerConfig("../../config/chainConfig.json")
 	if err != nil {
 		fmt.Printf("loading deploymentconfig: %v", err)
 		return
@@ -146,7 +146,7 @@ func TestSignPayment(t *testing.T) {
 		ExecutorSignature: sg,
 	}
 	fmt.Println(data)
-	chConfig, err := LoadChainConfig("../../config/chainConfig.json")
+	chConfig, err := LoadBrokerConfig("../../config/chainConfig.json")
 	if err != nil {
 		t.Errorf("loading deploymentconfig: %v", err)
 		return

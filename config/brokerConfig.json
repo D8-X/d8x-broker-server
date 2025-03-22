@@ -1,0 +1,40 @@
+[
+  {
+    "chainId": 1101,
+    "name": "zkEVM Mainnet",
+    "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
+  },
+  {
+    "chainId": 42161,
+    "name": "arbitrum",
+    "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
+  },
+  {
+    "chainId": 80094,
+    "name": "bera",
+    "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"],
+    "rebateTokens": [
+      {
+        "name": "MadBears",
+        "address": "0xff813d6121142db3a0545c67e4c047d51061f736",
+        "decimals": 0,
+        "scheme": [
+          {"amount": 1, "feeMultiplier": 0}
+        ]
+      },
+      {
+        "name": "d8x",
+        "address": "0xDc28023CCdfbE553643c41A335a4F555Edf937Df",
+        "decimals": 18,
+        "scheme": [
+          {"amount": 1, "feeMultiplier": 0}
+        ]
+      }
+    ]
+  },
+  {
+    "chainId": 8453,
+    "name": "base",
+    "allowedExecutors": ["0x3ef256282e578c5D97a7231C3C046F19b1E50855"]
+  }
+]

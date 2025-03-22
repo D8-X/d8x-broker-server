@@ -1,7 +1,7 @@
 [
     {
         "chainId": 1101,
-        "HTTP": ["https://zkevm-rpc.com"]
+        "HTTP": ["https://zkevm-rpc.com", "https://polygon-zkevm.drpc.org", "https://1rpc.io/polygon/zkevm"]
     },
     
     {
@@ -10,10 +10,10 @@
     },
     {
         "chainId": 42161,
-        "HTTP": ["https://arbitrum.llamarpc.com"]
+        "HTTP": ["https://arbitrum.llamarpc.com", "https://arb1.lava.build", "https://arbitrum.meowrpc.com"]
     },
     {
         "chainId": 8453,
-        "HTTP": ["https://base-pokt.nodies.app"]
+        "HTTP": ["https://base-pokt.nodies.app", "https://base.llamarpc.com", "https://1rpc.io/base"]
     }
 ]

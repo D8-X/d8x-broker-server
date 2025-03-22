@@ -10,20 +10,33 @@ import (
 	"github.com/redis/rueidis"
 )
 
-// chain config based on data from config file
+// BrokerConfig based on data from config file 'brokerConfig.json'
 // and sdk
-type ChainConfig struct {
+type BrokerConfig struct {
 	ChainId           int64
 	Name              string
 	AllowedExecutors  []common.Address
-	MultiPayCtrctAddr common.Address
-	ProxyAddr         common.Address
+	RebateTokens      []RebateToken
+	MultiPayCtrctAddr common.Address // from sdk
+	ProxyAddr         common.Address // from sdk
 }
 
-type ChainConfigFile struct {
+type BrokerConfigFile struct {
 	ChainId          int64            `json:"chainId"`
 	Name             string           `json:"name"`
 	AllowedExecutors []common.Address `json:"allowedExecutors"`
+	RebateTokens     []RebateToken    `json:"rebateTokens"`
+}
+
+type RebateToken struct {
+	Name     string         `json:"name"`
+	Address  common.Address `json:"address"`
+	Decimals int8           `json:"decimals"`
+	Scheme   []RebateScheme `json:"scheme"`
+}
+type RebateScheme struct {
+	Amount     float64 `json:"amount"`
+	Multiplier float64 `json:"feeMultiplier"`
 }
 type RpcConfig struct {
 	ChainId int64    `json:"chainId"`
