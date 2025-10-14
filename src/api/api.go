@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"math/big"
 	"net"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/D8-X/d8x-broker-server/src/contracts"
+	"github.com/D8-X/d8x-broker-server/src/globalrpc"
 	"github.com/D8-X/d8x-broker-server/src/utils"
 	"github.com/D8-X/d8x-futures-go-sdk/pkg/d8x_futures"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -24,32 +26,42 @@ const APPROVAL_EXPIRY_SEC int64 = 86400 * 7
 
 // App is dependency container for API server
 type App struct {
-	Port              string
-	BindAddr          string
-	Pen               utils.SignaturePen
-	BrokerFeeTbps     uint16
-	BrokerFeeLvlsTbps map[int][]uint16
-	RedisClient       *utils.RueidisClient
-	TokenApprovalTs   map[string]int64
+	Port            string
+	BindAddr        string
+	Pen             utils.SignaturePen
+	BrokerFeeTbps   uint16
+	RedisClient     *utils.RueidisClient
+	TokenApprovalTs map[string]int64
+	BrokerConf      map[int64]utils.BrokerConfig
+	GlblRpc         map[int64]*globalrpc.GlobalRpc
 }
 
-func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW, FeeRed string, chainConf map[int64]utils.ChainConfig, rpcConf []utils.RpcConfig, feeTbps uint16) (*App, error) {
-	pen, err := utils.NewSignaturePen(pk, chainConf, rpcConf)
+func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW string, brkrConf map[int64]utils.BrokerConfig, rpcConf string, feeTbps uint16) (*App, error) {
+	a := App{
+		Port:            port,
+		BindAddr:        bindAddr,
+		BrokerFeeTbps:   feeTbps,
+		TokenApprovalTs: make(map[string]int64),
+		BrokerConf:      brkrConf,
+		GlblRpc:         make(map[int64]*globalrpc.GlobalRpc),
+	}
+	for cId := range brkrConf {
+		r, err := globalrpc.NewGlobalRpc(int(cId), rpcConf, REDIS_ADDR, REDIS_PW)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create global rpc for chain %d: %v", cId, err)
+		}
+		a.GlblRpc[cId] = r
+	}
+	rpcs, err := utils.LoadRpcConfig(rpcConf)
+	if err != nil {
+		return nil, err
+	}
+	pen, err := utils.NewSignaturePen(pk, brkrConf, rpcs)
 	if err != nil {
 		return nil, errors.New("Unable to create signature pen:" + err.Error())
 	}
-	feeRed := vip3ToFeeMap(FeeRed, feeTbps)
-	if len(feeRed) > 0 {
-		slog.Info("VIP3 reduction enabled")
-	}
-	a := App{
-		Port:              port,
-		BindAddr:          bindAddr,
-		Pen:               pen,
-		BrokerFeeTbps:     feeTbps,
-		BrokerFeeLvlsTbps: feeRed,
-		TokenApprovalTs:   make(map[string]int64),
-	}
+	a.Pen = pen
+
 	client, err := rueidis.NewClient(
 		rueidis.ClientOption{InitAddress: []string{REDIS_ADDR}, Password: REDIS_PW})
 	if err != nil {
@@ -88,7 +100,7 @@ func (a *App) ApproveToken(chainId int64, tokenAddr common.Address) error {
 		slog.Info("token already approved for chain.tkn=" + key)
 		return nil
 	}
-	config := a.Pen.ChainConfig[chainId]
+	config := a.Pen.BrokerConf[chainId]
 	rpcUrls := a.Pen.RpcUrl[chainId]
 	if len(rpcUrls) == 0 {
 		return errors.New("no rpc url defined for chain " + strconv.Itoa(int(chainId)))

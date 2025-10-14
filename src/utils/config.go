@@ -12,21 +12,22 @@ import (
 )
 
 // load configuration json with deployment addresses: "config/chainConfig.json"
-func LoadChainConfig(configName string) (map[int64]ChainConfig, error) {
+// and fill with info from sdk
+func LoadBrokerConfig(configName string) (map[int64]BrokerConfig, error) {
 	// Read the JSON file
 	data, err := os.ReadFile(configName)
 	if err != nil {
 		log.Fatal("Error reading JSON file:", err)
 		return nil, err
 	}
-	var configuration []ChainConfigFile
+	var configuration []BrokerConfigFile
 	// Unmarshal the JSON data into the Configuration struct
 	err = json.Unmarshal(data, &configuration)
 	if err != nil {
 		log.Fatal("Error decoding JSON:", err)
 		return nil, err
 	}
-	config := make(map[int64]ChainConfig)
+	config := make(map[int64]BrokerConfig)
 	for k := range configuration {
 		if len(configuration[k].AllowedExecutors) == 0 {
 			// we have no executors whitelisted
@@ -43,10 +44,11 @@ func LoadChainConfig(configName string) (map[int64]ChainConfig, error) {
 		if sdkConf.ProxyAddr == (common.Address{}) {
 			return nil, fmt.Errorf("no proxy defined in sdk chain config for chain %d", configuration[k].ChainId)
 		}
-		config[configuration[k].ChainId] = ChainConfig{
+		config[configuration[k].ChainId] = BrokerConfig{
 			ChainId:           configuration[k].ChainId,
 			Name:              configuration[k].Name,
 			AllowedExecutors:  configuration[k].AllowedExecutors,
+			RebateTokens:      configuration[k].RebateTokens,
 			MultiPayCtrctAddr: sdkConf.MultiPayAddr,
 			ProxyAddr:         sdkConf.ProxyAddr,
 		}

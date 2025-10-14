@@ -35,7 +35,7 @@ func RunExecutorWs() {
 		slog.Error("loading env: " + err.Error())
 		return
 	}
-	config, err := utils.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
+	config, err := utils.LoadBrokerConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
 		slog.Error("loading chain config: " + err.Error())
 		return
@@ -66,15 +66,9 @@ func RunBroker() {
 	}
 
 	fmt.Println("Loading config file from " + viper.GetString(env.CONFIG_PATH))
-	chConf, err := utils.LoadChainConfig(viper.GetString(env.CONFIG_PATH))
+	chConf, err := utils.LoadBrokerConfig(viper.GetString(env.CONFIG_PATH))
 	if err != nil {
 		slog.Error("loading chain config: " + err.Error())
-		return
-	}
-	fmt.Println("Loading rpc config file from " + viper.GetString(env.CONFIG_RPC_PATH))
-	rpcConf, err := utils.LoadRpcConfig(viper.GetString(env.CONFIG_RPC_PATH))
-	if err != nil {
-		slog.Error("loading rpc config: " + err.Error())
 		return
 	}
 	pk := utils.LoadFromFile(viper.GetString(env.KEYFILE_PATH)+"keyfile.txt", abc)
@@ -84,9 +78,8 @@ func RunBroker() {
 		viper.GetString(env.API_BIND_ADDR),
 		viper.GetString(env.REDIS_ADDR),
 		viper.GetString(env.REDIS_PW),
-		viper.GetString(env.VIP3_REDUCTION_PERC),
 		chConf,
-		rpcConf,
+		viper.GetString(env.CONFIG_RPC_PATH),
 		fee)
 	if err != nil {
 		slog.Error("API init: " + err.Error())
@@ -112,7 +105,6 @@ func loadEnv(requiredEnvs []string) error {
 	viper.SetDefault(env.API_BIND_ADDR, "")
 	viper.SetDefault(env.API_PORT, "8001")
 	viper.SetDefault(env.WS_ADDR, "executorws:8080")
-	viper.SetDefault(env.VIP3_REDUCTION_PERC, "")
 	for _, e := range requiredEnvs {
 		if !viper.IsSet(e) {
 			return errors.New("required environment variable not set variable" + e)

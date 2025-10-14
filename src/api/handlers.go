@@ -16,9 +16,9 @@ import (
 )
 
 func (a *App) GetChainConfig(w http.ResponseWriter, r *http.Request) {
-	config := make([]utils.ChainConfig, len(a.Pen.ChainConfig))
+	config := make([]utils.BrokerConfig, len(a.Pen.BrokerConf))
 	var k int
-	for _, conf := range a.Pen.ChainConfig {
+	for _, conf := range a.Pen.BrokerConf {
 		config[k] = conf
 		k++
 	}
@@ -258,7 +258,7 @@ func (a *App) SignPayment(w http.ResponseWriter, r *http.Request) {
 }
 
 func findExecutor(pen utils.SignaturePen, chainId int64, executor common.Address) bool {
-	config := pen.ChainConfig[chainId]
+	config := pen.BrokerConf[chainId]
 	for _, addr := range config.AllowedExecutors {
 		if addr == executor {
 			return true

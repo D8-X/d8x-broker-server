@@ -24,12 +24,12 @@ import (
 // SignaturePen stores the chainId <-> deployment address mappings,
 // and the wallet struct for the broker
 type SignaturePen struct {
-	ChainConfig map[int64]ChainConfig
-	RpcUrl      map[int64][]string
-	Wallets     map[int64]*d8x_futures.Wallet
+	BrokerConf map[int64]BrokerConfig
+	RpcUrl     map[int64][]string
+	Wallets    map[int64]*d8x_futures.Wallet
 }
 
-func NewSignaturePen(privateKeyHex string, chConf map[int64]ChainConfig, rpcConf []RpcConfig) (SignaturePen, error) {
+func NewSignaturePen(privateKeyHex string, chConf map[int64]BrokerConfig, rpcConf []RpcConfig) (SignaturePen, error) {
 
 	rpcMap := createRpcConfigMap(rpcConf, chConf)
 
@@ -38,9 +38,9 @@ func NewSignaturePen(privateKeyHex string, chConf map[int64]ChainConfig, rpcConf
 		return SignaturePen{}, err
 	}
 	pen := SignaturePen{
-		ChainConfig: chConf,
-		RpcUrl:      rpcMap,
-		Wallets:     wallets,
+		BrokerConf: chConf,
+		RpcUrl:     rpcMap,
+		Wallets:    wallets,
 	}
 	return pen, nil
 }
@@ -50,11 +50,11 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 	if err != nil {
 		return common.Address{}, err
 	}
-	c := p.ChainConfig[ps.Payment.ChainId]
+	c := p.BrokerConf[ps.Payment.ChainId]
 	if c.MultiPayCtrctAddr == (common.Address{}) {
 		return common.Address{}, fmt.Errorf("Multipay ctrct not found for chain: " + strconv.Itoa(int(ps.Payment.ChainId)))
 	}
-	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
+	ctrct := p.BrokerConf[ps.Payment.ChainId].MultiPayCtrctAddr
 	if !strings.EqualFold(ctrct.Hex(), ps.Payment.MultiPayCtrct.Hex()) {
 		return common.Address{}, fmt.Errorf("multipay ctrct mismatch, expected: %s got: %s on chain %d", ctrct.String(), ps.Payment.MultiPayCtrct.Hex(), ps.Payment.ChainId)
 	}
@@ -66,7 +66,7 @@ func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatur
 }
 
 func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPaySignatureReq) ([]byte, error) {
-	ctrct := p.ChainConfig[ps.Payment.ChainId].MultiPayCtrctAddr
+	ctrct := p.BrokerConf[ps.Payment.ChainId].MultiPayCtrctAddr
 	if !strings.EqualFold(ctrct.String(), ps.Payment.MultiPayCtrct.String()) {
 		return nil, fmt.Errorf("Multipay ctrct mismatch, expected: " + ctrct.String())
 	}
@@ -97,7 +97,7 @@ func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainI
 		IDeadline:     order.Deadline,
 		IPerpetualId:  big.NewInt(int64(order.PerpetualId)),
 	}
-	chainConfig, exists := p.ChainConfig[chainId]
+	chainConfig, exists := p.BrokerConf[chainId]
 	if !exists {
 		return nil, fmt.Errorf("chain config not defined for chain %d", chainId)
 	}
@@ -199,7 +199,7 @@ func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, proxyAddr
 	return digest, sig, err
 }
 
-func createRpcConfigMap(configList []RpcConfig, chainConfig map[int64]ChainConfig) map[int64][]string {
+func createRpcConfigMap(configList []RpcConfig, chainConfig map[int64]BrokerConfig) map[int64][]string {
 	config := make(map[int64][]string)
 	for _, c := range configList {
 		if _, exists := chainConfig[c.ChainId]; exists {
@@ -209,7 +209,7 @@ func createRpcConfigMap(configList []RpcConfig, chainConfig map[int64]ChainConfi
 	return config
 }
 
-func createWalletMap(chainConfig map[int64]ChainConfig, privateKeyHex string, rpcUrlMap map[int64][]string) (map[int64]*d8x_futures.Wallet, error) {
+func createWalletMap(chainConfig map[int64]BrokerConfig, privateKeyHex string, rpcUrlMap map[int64][]string) (map[int64]*d8x_futures.Wallet, error) {
 	walletMap := make(map[int64]*d8x_futures.Wallet)
 	for chainId := range chainConfig {
 		rpcUrls := rpcUrlMap[chainId]
