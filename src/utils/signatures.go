@@ -11,8 +11,6 @@ import (
 	"io"
 	"log/slog"
 	"math/big"
-	"strconv"
-	"strings"
 
 	"github.com/D8-X/d8x-futures-go-sdk/config"
 	"github.com/D8-X/d8x-futures-go-sdk/pkg/contracts"
@@ -30,7 +28,6 @@ type SignaturePen struct {
 }
 
 func NewSignaturePen(privateKeyHex string, chConf map[int64]BrokerConfig, rpcConf []RpcConfig) (SignaturePen, error) {
-
 	rpcMap := createRpcConfigMap(rpcConf, chConf)
 
 	wallets, err := createWalletMap(chConf, privateKeyHex, rpcMap)
@@ -45,51 +42,8 @@ func NewSignaturePen(privateKeyHex string, chConf map[int64]BrokerConfig, rpcCon
 	return pen, nil
 }
 
-func (p *SignaturePen) RecoverPaymentSignerAddr(ps d8x_futures.BrokerPaySignatureReq) (common.Address, error) {
-	sig, err := d8x_futures.BytesFromHexString(ps.ExecutorSignature)
-	if err != nil {
-		return common.Address{}, err
-	}
-	c := p.BrokerConf[ps.Payment.ChainId]
-	if c.MultiPayCtrctAddr == (common.Address{}) {
-		return common.Address{}, fmt.Errorf("Multipay ctrct not found for chain: " + strconv.Itoa(int(ps.Payment.ChainId)))
-	}
-	ctrct := p.BrokerConf[ps.Payment.ChainId].MultiPayCtrctAddr
-	if !strings.EqualFold(ctrct.Hex(), ps.Payment.MultiPayCtrct.Hex()) {
-		return common.Address{}, fmt.Errorf("multipay ctrct mismatch, expected: %s got: %s on chain %d", ctrct.String(), ps.Payment.MultiPayCtrct.Hex(), ps.Payment.ChainId)
-	}
-	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sig, &ps.Payment)
-	if err != nil {
-		return common.Address{}, err
-	}
-	return addr, nil
-}
-
-func (p *SignaturePen) GetBrokerPaymentSignatureResponse(ps d8x_futures.BrokerPaySignatureReq) ([]byte, error) {
-	ctrct := p.BrokerConf[ps.Payment.ChainId].MultiPayCtrctAddr
-	if !strings.EqualFold(ctrct.String(), ps.Payment.MultiPayCtrct.String()) {
-		return nil, fmt.Errorf("Multipay ctrct mismatch, expected: " + ctrct.String())
-	}
-	w := p.Wallets[ps.Payment.ChainId]
-	_, sig, err := d8x_futures.RawCreatePaymentBrokerSignature(&ps.Payment, w)
-	if err != nil {
-		return nil, err
-	}
-	response := struct {
-		BrokerSignature string `json:"brokerSignature"`
-	}{
-		BrokerSignature: sig,
-	}
-	// Marshal the struct into JSON
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		return nil, err
-	}
-	return jsonResponse, nil
-}
-
 func (p *SignaturePen) GetBrokerOrderSignatureResponse(order APIOrderSig, chainId int64, redis *RueidisClient) ([]byte, error) {
-	var perpOrder = contracts.IPerpetualOrderOrder{
+	perpOrder := contracts.IPerpetualOrderOrder{
 		// data for broker signature
 		BrokerFeeTbps: order.BrokerFeeTbps,
 		TraderAddr:    common.HexToAddress(order.TraderAddr),
@@ -216,11 +170,7 @@ func createWalletMap(chainConfig map[int64]BrokerConfig, privateKeyHex string, r
 		if len(rpcUrls) == 0 {
 			return nil, fmt.Errorf("createWalletMap could not find RPC url for chain ID %d", chainId)
 		}
-		client, err := CreateRpcClient(rpcUrls)
-		if err != nil {
-			return nil, fmt.Errorf("createWalletMap:" + err.Error())
-		}
-		wallet, err := d8x_futures.NewWallet(privateKeyHex, chainId, client)
+		wallet, err := d8x_futures.NewWallet(privateKeyHex, chainId)
 		if err != nil {
 			return nil, fmt.Errorf("error casting public key to ECDSA:" + err.Error())
 		}

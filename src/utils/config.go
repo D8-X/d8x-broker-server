@@ -29,28 +29,19 @@ func LoadBrokerConfig(configName string) (map[int64]BrokerConfig, error) {
 	}
 	config := make(map[int64]BrokerConfig)
 	for k := range configuration {
-		if len(configuration[k].AllowedExecutors) == 0 {
-			// we have no executors whitelisted
-			continue
-		}
 		slog.Info("loading config for chain", "chainId", configuration[k].ChainId)
 		sdkConf, err := d8x_config.GetDefaultChainConfigFromId(configuration[k].ChainId)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find sdk chain config for chain %d", configuration[k].ChainId)
 		}
-		if sdkConf.MultiPayAddr == (common.Address{}) {
-			return nil, fmt.Errorf("no multipay addr defined in sdk chain config for chain %d", configuration[k].ChainId)
-		}
 		if sdkConf.ProxyAddr == (common.Address{}) {
 			return nil, fmt.Errorf("no proxy defined in sdk chain config for chain %d", configuration[k].ChainId)
 		}
 		config[configuration[k].ChainId] = BrokerConfig{
-			ChainId:           configuration[k].ChainId,
-			Name:              configuration[k].Name,
-			AllowedExecutors:  configuration[k].AllowedExecutors,
-			RebateTokens:      configuration[k].RebateTokens,
-			MultiPayCtrctAddr: sdkConf.MultiPayAddr,
-			ProxyAddr:         sdkConf.ProxyAddr,
+			ChainId:      configuration[k].ChainId,
+			Name:         configuration[k].Name,
+			RebateTokens: configuration[k].RebateTokens,
+			ProxyAddr:    sdkConf.ProxyAddr,
 		}
 	}
 	return config, nil
