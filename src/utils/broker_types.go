@@ -13,19 +13,16 @@ import (
 // BrokerConfig based on data from config file 'brokerConfig.json'
 // and sdk
 type BrokerConfig struct {
-	ChainId           int64
-	Name              string
-	AllowedExecutors  []common.Address
-	RebateTokens      []RebateToken
-	MultiPayCtrctAddr common.Address // from sdk
-	ProxyAddr         common.Address // from sdk
+	ChainId      int64
+	Name         string
+	RebateTokens []RebateToken
+	ProxyAddr    common.Address // from sdk
 }
 
 type BrokerConfigFile struct {
-	ChainId          int64            `json:"chainId"`
-	Name             string           `json:"name"`
-	AllowedExecutors []common.Address `json:"allowedExecutors"`
-	RebateTokens     []RebateToken    `json:"rebateTokens"`
+	ChainId      int64         `json:"chainId"`
+	Name         string        `json:"name"`
+	RebateTokens []RebateToken `json:"rebateTokens"`
 }
 
 type RebateToken struct {

@@ -11,7 +11,6 @@ import (
 	"log/slog"
 
 	"github.com/D8-X/d8x-broker-server/src/utils"
-	"github.com/D8-X/d8x-futures-go-sdk/pkg/d8x_futures"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -180,91 +179,6 @@ func (a *App) OrdersSubmitted(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprint(w, `{"orders-submitted": "success"}`)
-}
-
-func (a *App) SignPayment(w http.ResponseWriter, r *http.Request) {
-	pen := a.Pen
-	// Read the JSON data from the request body
-	var jsonData []byte
-	if r.Body != nil {
-		defer r.Body.Close()
-		jsonData, _ = io.ReadAll(r.Body)
-	}
-
-	// Parse the JSON payload
-	var req d8x_futures.BrokerPaySignatureReq
-	err := req.UnmarshalJSON([]byte(jsonData))
-	if err != nil {
-		slog.Error("Error in payment signature request: " + err.Error())
-		errMsg := `Wrong argument types. Usage: {
-			'payment': {
-				'payer': '0x4Fdc785fe2C6812960C93CA2F9D12b5Bd21ea2a1', 
-				'executor': '0xDa47a0CAc77D50114F2725D06a2Ce887cF9f4D98', 
-				'token': '0x2d10075E54356E16Ebd5C6BB5194290709B69C1e', 
-				'timestamp': 1691249493, 
-				'id': 1,
-				'totalAmount': '1000000000000000000',
-				'chainId': 80001,
-				'multiPayCtrct': '0x30b55550e02B663E15A95B50850ebD20363c2AD5'
-			},
-			'signature': '0xABCE...'
-		}`
-		errMsg = strings.ReplaceAll(errMsg, "\t", "")
-		errMsg = strings.ReplaceAll(errMsg, "\n", "")
-		http.Error(w, string(formatError(errMsg)), http.StatusBadRequest)
-		return
-	}
-	addr, err := pen.RecoverPaymentSignerAddr(req)
-	if err != nil {
-		slog.Error("SignPayment RecoverPaymentSignerAddr:" + err.Error())
-		response := string(formatError(err.Error()))
-		fmt.Fprint(w, response)
-		return
-	}
-	if addr != req.Payment.Executor {
-		slog.Error("SignPayment: wrong referrer signature")
-		response := string(formatError("wrong signature"))
-		fmt.Fprint(w, response)
-		return
-	}
-	// signature correct, check if this is a registered payment executor
-	if !findExecutor(pen, req.Payment.ChainId, addr) {
-		slog.Error("SignPayment: executor not whitelisted")
-		response := string(formatError("executor not allowed"))
-		fmt.Fprint(w, response)
-		return
-	}
-	// ensure token is approved to be spent
-	err = a.ApproveToken(req.Payment.ChainId, req.Payment.Token)
-	if err != nil {
-		msg := fmt.Sprintf("error approving token for chain %d %s", req.Payment.ChainId, err.Error())
-		slog.Error(msg)
-		response := string(formatError("error approving token spending"))
-		fmt.Fprint(w, response)
-		return
-	}
-	// allowed executor, token approved, we can sign
-	jsonResponse, err := pen.GetBrokerPaymentSignatureResponse(req)
-	if err != nil {
-		response := string(formatError(err.Error()))
-		fmt.Fprint(w, response)
-		return
-	}
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-	// Write the JSON response
-	w.Write(jsonResponse)
-
-}
-
-func findExecutor(pen utils.SignaturePen, chainId int64, executor common.Address) bool {
-	config := pen.BrokerConf[chainId]
-	for _, addr := range config.AllowedExecutors {
-		if addr == executor {
-			return true
-		}
-	}
-	return false
 }
 
 func formatError(errorMsg string) []byte {

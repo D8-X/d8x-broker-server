@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"crypto/ecdsa"
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -18,12 +16,10 @@ import (
 )
 
 func TestSignOrder(t *testing.T) {
-
 	loadEnv()
 	privateKey, err := crypto.HexToECDSA(viper.GetString("PK_TEST"))
 	// instead generate a new private key
 	// privateKey, err := crypto.GenerateKey()
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,7 +43,7 @@ func TestSignOrder(t *testing.T) {
 		t.FailNow()
 	}
 	fmt.Printf("broker = %s\n", addr.String())
-	var perpOrder = contracts.IPerpetualOrderOrder{
+	perpOrder := contracts.IPerpetualOrderOrder{
 		BrokerFeeTbps: 10,
 		TraderAddr:    common.HexToAddress("9d5aaB428e98678d0E645ea4AeBd25f744341a05"),
 		BrokerAddr:    addr,
@@ -91,111 +87,7 @@ func TestSignOrder(t *testing.T) {
 	}
 }
 
-func generateKey() (common.Address, *ecdsa.PrivateKey, error) {
-	// Generate a new private key
-	privateKey, err := crypto.GenerateKey()
-	if err != nil {
-		log.Fatal(err)
-		return common.Address{}, nil, err
-	}
-	// Derive the Ethereum address from the private key
-	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
-	return addr, privateKey, err
-}
-
-func TestSignPayment(t *testing.T) {
-	brokerAddr, brokerPk, err := generateKey()
-	//brokerAddr, brokerPk, err := getAddrPkFromString("key")
-	if err != nil {
-		log.Fatal(err)
-	}
-	execAddr, execPk, err := generateKey()
-	//execAddr, execPk, err := getAddrPkFromString("key")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	multiPayCtrctAddr := common.HexToAddress("0xfCBE2f332b1249cDE226DFFE8b2435162426AfE5")
-	summary := d8x_futures.PaySummary{
-		Payer:         brokerAddr,
-		Executor:      execAddr,
-		Token:         common.HexToAddress("0x2d10075E54356E16Ebd5C6BB5194290709B69C1e"),
-		Timestamp:     1697025629,
-		Id:            1,
-		TotalAmount:   big.NewInt(1e18),
-		ChainId:       1442,
-		MultiPayCtrct: multiPayCtrctAddr,
-	}
-	brokerAddrStr := brokerAddr.String()
-	execAddrStr := execAddr.String()
-	t.Log("brokerAddr = ", brokerAddrStr)
-	t.Log("execAddr = ", execAddrStr)
-
-	pk := fmt.Sprintf("%x", execPk.D)
-	execWallet, err := d8x_futures.NewWallet(pk, 1442, nil)
-	if err != nil {
-		t.Errorf("error creating wallet")
-	}
-	_, sg, err := d8x_futures.RawCreatePaymentBrokerSignature(&summary, execWallet)
-	if err != nil {
-		fmt.Println(err.Error())
-		t.FailNow()
-	}
-	data := d8x_futures.BrokerPaySignatureReq{
-		Payment:           summary,
-		ExecutorSignature: sg,
-	}
-	fmt.Println(data)
-	chConfig, err := LoadBrokerConfig("../../config/chainConfig.json")
-	if err != nil {
-		t.Errorf("loading deploymentconfig: %v", err)
-		return
-	}
-	rpcConfig, err := LoadRpcConfig("../../config/rpc.json")
-	if err != nil {
-		t.Errorf("loading deploymentconfig: %v", err)
-		return
-	}
-	pkBrker := fmt.Sprintf("%x", brokerPk.D)
-	pen, err := NewSignaturePen(pkBrker, chConfig, rpcConfig)
-	if err != nil {
-		fmt.Println(err.Error())
-		t.FailNow()
-	}
-	jsonRes, err := pen.GetBrokerPaymentSignatureResponse(data)
-	if err != nil {
-		t.Errorf("GetBrokerPaymentSignatureResponse: %v", err)
-		return
-	}
-	type SignatureData struct {
-		BrokerSignature string `json:"brokerSignature"`
-	}
-	var brokerSig SignatureData
-	err = json.Unmarshal(jsonRes, &brokerSig)
-	if err != nil {
-		t.Errorf("Unmarshal GetBrokerPaymentSignatureResponse: %v", err)
-		return
-	}
-	// recover again
-	sigBytes, err := d8x_futures.BytesFromHexString(brokerSig.BrokerSignature)
-	if err != nil {
-		t.Errorf("decoding signature: %v", err)
-	}
-	addr, err := d8x_futures.RecoverPaymentSignatureAddr(sigBytes, &summary)
-	if err != nil {
-		t.Errorf("error RecoverPaymentSignatureAddr")
-	}
-	t.Log("recovered addr = ", addr.String())
-	t.Log("signer    addr = ", brokerAddr.String())
-	if addr != brokerAddr {
-		t.Errorf("error wrong address recovered")
-	} else {
-		t.Logf("recovered address correct")
-	}
-}
-
 func loadEnv() {
-
 	viper.SetConfigFile("../../.env")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("could not load .env file")
