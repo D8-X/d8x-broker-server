@@ -10,7 +10,7 @@ import (
 	"github.com/redis/rueidis"
 )
 
-// BrokerConfig based on data from config file 'brokerConfig.json'
+// BrokerConfig based on data from config file 'chainConfig.json'
 // and sdk
 type BrokerConfig struct {
 	ChainId   int64

@@ -71,7 +71,7 @@ networks:
 
 configs:
   broker_config:
-    file: ./config/brokerConfig.json
+    file: ./config/chainConfig.json
 volumes:
   keyvol:
     external: true
