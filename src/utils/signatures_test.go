@@ -26,18 +26,13 @@ func TestSignOrder(t *testing.T) {
 	// Derive the Ethereum address from the private key
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	chConfig, err := LoadBrokerConfig("../../config/chainConfig.json")
-	if err != nil {
-		fmt.Printf("loading deploymentconfig: %v", err)
-		return
-	}
-	rpcConfig, err := LoadRpcConfig("../../config/rpc.json")
+	chConfig, err := LoadBrokerConfig("../../config/brokerConfig.json")
 	if err != nil {
 		fmt.Printf("loading deploymentconfig: %v", err)
 		return
 	}
 	pk := fmt.Sprintf("%x", privateKey.D)
-	pen, err := NewSignaturePen(pk, chConfig, rpcConfig)
+	pen, err := NewSignaturePen(pk, chConfig)
 	if err != nil {
 		fmt.Printf("NewSignaturePen: %v\n", err)
 		t.FailNow()
