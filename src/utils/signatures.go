@@ -23,20 +23,16 @@ import (
 // and the wallet struct for the broker
 type SignaturePen struct {
 	BrokerConf map[int64]BrokerConfig
-	RpcUrl     map[int64][]string
 	Wallets    map[int64]*d8x_futures.Wallet
 }
 
-func NewSignaturePen(privateKeyHex string, chConf map[int64]BrokerConfig, rpcConf []RpcConfig) (SignaturePen, error) {
-	rpcMap := createRpcConfigMap(rpcConf, chConf)
-
-	wallets, err := createWalletMap(chConf, privateKeyHex, rpcMap)
+func NewSignaturePen(privateKeyHex string, chConf map[int64]BrokerConfig) (SignaturePen, error) {
+	wallets, err := createWalletMap(chConf, privateKeyHex)
 	if err != nil {
 		return SignaturePen{}, err
 	}
 	pen := SignaturePen{
 		BrokerConf: chConf,
-		RpcUrl:     rpcMap,
 		Wallets:    wallets,
 	}
 	return pen, nil
@@ -153,23 +149,9 @@ func (p *SignaturePen) SignOrder(order contracts.IPerpetualOrderOrder, proxyAddr
 	return digest, sig, err
 }
 
-func createRpcConfigMap(configList []RpcConfig, chainConfig map[int64]BrokerConfig) map[int64][]string {
-	config := make(map[int64][]string)
-	for _, c := range configList {
-		if _, exists := chainConfig[c.ChainId]; exists {
-			config[c.ChainId] = c.Rpc
-		}
-	}
-	return config
-}
-
-func createWalletMap(chainConfig map[int64]BrokerConfig, privateKeyHex string, rpcUrlMap map[int64][]string) (map[int64]*d8x_futures.Wallet, error) {
+func createWalletMap(chainConfig map[int64]BrokerConfig, privateKeyHex string) (map[int64]*d8x_futures.Wallet, error) {
 	walletMap := make(map[int64]*d8x_futures.Wallet)
 	for chainId := range chainConfig {
-		rpcUrls := rpcUrlMap[chainId]
-		if len(rpcUrls) == 0 {
-			return nil, fmt.Errorf("createWalletMap could not find RPC url for chain ID %d", chainId)
-		}
 		wallet, err := d8x_futures.NewWallet(privateKeyHex, chainId)
 		if err != nil {
 			return nil, fmt.Errorf("error casting public key to ECDSA:" + err.Error())

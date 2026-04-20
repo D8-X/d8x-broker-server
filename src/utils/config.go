@@ -11,8 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// load configuration json with deployment addresses: "config/chainConfig.json"
-// and fill with info from sdk
+// LoadBrokerConfig loads broker configuration and fills proxy addresses from the sdk.
 func LoadBrokerConfig(configName string) (map[int64]BrokerConfig, error) {
 	// Read the JSON file
 	data, err := os.ReadFile(configName)
@@ -38,29 +37,11 @@ func LoadBrokerConfig(configName string) (map[int64]BrokerConfig, error) {
 			return nil, fmt.Errorf("no proxy defined in sdk chain config for chain %d", configuration[k].ChainId)
 		}
 		config[configuration[k].ChainId] = BrokerConfig{
-			ChainId:      configuration[k].ChainId,
-			Name:         configuration[k].Name,
-			RebateTokens: configuration[k].RebateTokens,
-			ProxyAddr:    sdkConf.ProxyAddr,
+			ChainId:   configuration[k].ChainId,
+			Name:      configuration[k].Name,
+			ProxyAddr: sdkConf.ProxyAddr,
 		}
 	}
 	return config, nil
 }
 
-// load configuration json with deployment addresses: "config/rpcConfig.json"
-func LoadRpcConfig(configName string) ([]RpcConfig, error) {
-	// Read the JSON file
-	data, err := os.ReadFile(configName)
-	if err != nil {
-		log.Fatal("Error reading JSON file:", err)
-		return []RpcConfig{}, err
-	}
-	var configuration []RpcConfig
-	// Unmarshal the JSON data into the Configuration struct
-	err = json.Unmarshal(data, &configuration)
-	if err != nil {
-		log.Fatal("Error decoding JSON:", err)
-		return []RpcConfig{}, err
-	}
-	return configuration, nil
-}

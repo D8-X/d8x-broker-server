@@ -56,7 +56,6 @@ func RunBroker() {
 		env.REDIS_ADDR,
 		env.REDIS_PW,
 		env.KEYFILE_PATH,
-		env.CONFIG_RPC_PATH,
 	}
 
 	err := loadEnv(requiredEnvs)
@@ -79,7 +78,6 @@ func RunBroker() {
 		viper.GetString(env.REDIS_ADDR),
 		viper.GetString(env.REDIS_PW),
 		chConf,
-		viper.GetString(env.CONFIG_RPC_PATH),
 		fee)
 	if err != nil {
 		slog.Error("API init: " + err.Error())
