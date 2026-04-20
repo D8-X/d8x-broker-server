@@ -1,7 +1,6 @@
 version: '3'
 services:
   broker:
-    #image: ghcr.io/d8-x/d8x-broker-server:dev
     build:
       context: .
       dockerfile: ./cmd/brokerapi/Dockerfile
@@ -9,28 +8,25 @@ services:
     depends_on:
       - redis
     ports:
-      # Default svc port is 8001
       - 8001:8001
     networks:
       - app-net
     environment:
+      BROKER_FEE_TBPS: "${BROKER_FEE_TBPS}"
       REDIS_ADDR: "${REDIS_ADDR}"
       REDIS_PW: "${REDIS_PW}"
-      CONFIG_PATH: /chain_config
-      CONFIG_RPC_PATH: /rpc_config
+      CONFIG_PATH: /broker_config
       KEYFILE_PATH: /keyfile/
     logging:
       options:
         max-size: "10m"
         max-file: "10"
     configs:
-      - chain_config
-      - rpc_config
+      - broker_config
     volumes:
       - mydata:/keyfile
 
   executorws:
-    #image: ghcr.io/d8-x/d8x-broker-exec-ws:dev
     build:
       context: .
       dockerfile: ./cmd/executorws/Dockerfile
@@ -38,7 +34,6 @@ services:
     depends_on:
       - redis
     ports:
-      # Default svc port is 8080
       - 8080:8080
     networks:
       - app-net
@@ -47,13 +42,13 @@ services:
       REDIS_PW: "${REDIS_PW}"
       WS_ADDR: "${WS_ADDR}"
       BROKER_FEE_TBPS: "${BROKER_FEE_TBPS}"
-      CONFIG_PATH: /chain_config
+      CONFIG_PATH: /broker_config
     logging:
       options:
         max-size: "10m"
         max-file: "10"
     configs:
-      - chain_config
+      - broker_config
 
   redis:
     image: redis
@@ -74,10 +69,8 @@ networks:
   app-net:
 
 configs:
-  chain_config:
+  broker_config:
     file: ./config/chainConfig.json
-  rpc_config:
-    file: ./config/rpc.json
 
 volumes:
   mydata:

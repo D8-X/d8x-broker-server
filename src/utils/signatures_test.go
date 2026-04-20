@@ -31,13 +31,8 @@ func TestSignOrder(t *testing.T) {
 		fmt.Printf("loading deploymentconfig: %v", err)
 		return
 	}
-	rpcConfig, err := LoadRpcConfig("../../config/rpc.json")
-	if err != nil {
-		fmt.Printf("loading deploymentconfig: %v", err)
-		return
-	}
 	pk := fmt.Sprintf("%x", privateKey.D)
-	pen, err := NewSignaturePen(pk, chConfig, rpcConfig)
+	pen, err := NewSignaturePen(pk, chConfig)
 	if err != nil {
 		fmt.Printf("NewSignaturePen: %v\n", err)
 		t.FailNow()

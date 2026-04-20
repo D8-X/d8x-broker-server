@@ -3,12 +3,10 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
 
-	"github.com/D8-X/d8x-broker-server/src/globalrpc"
 	"github.com/D8-X/d8x-broker-server/src/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/redis/rueidis"
@@ -16,35 +14,22 @@ import (
 
 // App is dependency container for API server
 type App struct {
-	Port        string
-	BindAddr    string
-	Pen         utils.SignaturePen
+	Port          string
+	BindAddr      string
+	Pen           utils.SignaturePen
 	BrokerFeeTbps uint16
-	RedisClient *utils.RueidisClient
-	BrokerConf  map[int64]utils.BrokerConfig
-	GlblRpc     map[int64]*globalrpc.GlobalRpc
+	RedisClient   *utils.RueidisClient
+	BrokerConf    map[int64]utils.BrokerConfig
 }
 
-func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW string, brkrConf map[int64]utils.BrokerConfig, rpcConf string, feeTbps uint16) (*App, error) {
+func NewApp(pk, port, bindAddr, REDIS_ADDR, REDIS_PW string, brkrConf map[int64]utils.BrokerConfig, feeTbps uint16) (*App, error) {
 	a := App{
 		Port:          port,
 		BindAddr:      bindAddr,
 		BrokerFeeTbps: feeTbps,
 		BrokerConf:    brkrConf,
-		GlblRpc:       make(map[int64]*globalrpc.GlobalRpc),
 	}
-	for cId := range brkrConf {
-		r, err := globalrpc.NewGlobalRpc(int(cId), rpcConf, REDIS_ADDR, REDIS_PW)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create global rpc for chain %d: %v", cId, err)
-		}
-		a.GlblRpc[cId] = r
-	}
-	rpcs, err := utils.LoadRpcConfig(rpcConf)
-	if err != nil {
-		return nil, err
-	}
-	pen, err := utils.NewSignaturePen(pk, brkrConf, rpcs)
+	pen, err := utils.NewSignaturePen(pk, brkrConf)
 	if err != nil {
 		return nil, errors.New("Unable to create signature pen:" + err.Error())
 	}
